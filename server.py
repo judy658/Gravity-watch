@@ -13,12 +13,15 @@ CORS(app)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = None
-if SUPABASE_URL and SUPABASE_KEY:
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    print(f"⚠️ [SUPABASE] Missing Env Variables! URL: {'Found' if SUPABASE_URL else 'NOT FOUND'}, KEY: {'Found' if SUPABASE_KEY else 'NOT FOUND'}")
+else:
     try:
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-        print("✅ Supabase Connected")
-    except:
-        print("❌ Supabase Connection Failed")
+        print("✅ Supabase Connected Successfully")
+    except Exception as e:
+        print(f"❌ Supabase Connection Failed Error: {str(e)}")
 
 data_manager = GravityDataManager()
 
