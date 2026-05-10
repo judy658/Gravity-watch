@@ -151,28 +151,46 @@ def get_home_feed(user_data=None, page=1):
     for k in buckets: random.shuffle(buckets[k])
 
     # SERT ALTIN ORAN MONTAJI (4-3-2-1)
+    for k in buckets: random.shuffle(buckets[k])
     interleaved = []
+    local_seen = set() # Bu istekte eklenenleri tut ki ayni sayfada da cift gelmesin
     loops = 0
+    
     while len(interleaved) < 20 and loops < 50:
         loops += 1
         added = 0
+        
+        def try_add(bucket_name):
+            if buckets[bucket_name]:
+                item = buckets[bucket_name].pop(0)
+                # Hem genel hafizada (seen_ids) hem de bu sayfada (local_seen) yoksa ekle
+                if item['id'] not in local_seen and item['id'] not in seen_ids:
+                    interleaved.append(item)
+                    local_seen.add(item['id'])
+                    return True
+            return False
+
         # 4 Abone
         for _ in range(4): 
-            if buckets['ABONELİK']: interleaved.append(buckets['ABONELİK'].pop(0)); added += 1
+            if try_add('ABONELİK'): added += 1
         # 3 İlgi
         for _ in range(3): 
-            if buckets['İLGİ']: interleaved.append(buckets['İLGİ'].pop(0)); added += 1
+            if try_add('İLGİ'): added += 1
         # 2 Keşfet
         for _ in range(2): 
-            if buckets['KEŞFET']: interleaved.append(buckets['KEŞFET'].pop(0)); added += 1
+            if try_add('KEŞFET'): added += 1
         # 1 Trend
-        if buckets['TREND']: interleaved.append(buckets['TREND'].pop(0)); added += 1
+        if try_add('TREND'): added += 1
         
         if added == 0: break
 
-    # Sadece abonelikler moduysa tum havuzu dondur
+    # Sadece abonelikler moduysa
     if subs_only:
-        sub_only_list = [i for i in raw_results if i['label'] == 'ABONELİK']
+        sub_only_list = []
+        for item in raw_results:
+            if item['label'] == 'ABONELİK' and item['id'] not in seen_ids and item['id'] not in local_seen:
+                sub_only_list.append(item)
+                local_seen.add(item['id'])
         random.shuffle(sub_only_list)
         return sub_only_list[:20]
 
