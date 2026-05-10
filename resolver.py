@@ -63,7 +63,7 @@ def is_trash(title, uploader, duration=None):
     return False
 
 def fetch_query(q_tuple):
-    q_str, label, seen_ids = q_tuple
+    q_str, label, seen_ids, sub_name = q_tuple
     ydl = get_ydl_instance()
     res = []
     try:
@@ -80,6 +80,13 @@ def fetch_query(q_tuple):
             uploader = e.get('uploader', 'YouTube')
             duration = e.get('duration')
             
+            # --- KIMLIK KONTROLU (ABONELIK ICIN) ---
+            if label == 'ABONELİK' and sub_name:
+                u_lower = uploader.lower()
+                s_lower = str(sub_name).lower()
+                if s_lower not in u_lower and u_lower not in s_lower:
+                    continue
+
             if not is_trash(title, uploader, duration):
                 res.append({
                     'id': vid, 'title': title,
@@ -106,21 +113,21 @@ def get_home_feed(user_data=None, page=1):
         sub_list = list(subscriptions)
         random.shuffle(sub_list)
         for sub in sub_list[:10]: # Her seferinde 10 farkli aboneye odaklan
-            queries.append((f"ytsearch{depth}:{sub}", 'ABONELİK', seen_ids))
+            queries.append((f"ytsearch{depth}:{sub}", 'ABONELİK', seen_ids, sub))
 
     if not subs_only:
         if interests:
             active_tags = sorted(interests.items(), key=lambda x: x[1], reverse=True)[:4]
             for tag, _ in active_tags:
-                queries.append((f"ytsearch{depth}:{tag} news", 'İLGİ', seen_ids))
+                queries.append((f"ytsearch{depth}:{tag} news", 'İLGİ', seen_ids, None))
         
         # --- GLOBAL VIP POPÜLER (%10) - TÜRKÇE DUBLAJ ÖNCELİKLİ ---
         global_vips = ['MrBeast', 'Mark Rober', 'Dude Perfect', 'Veritasium', 'Sidemen']
-        queries.append((f"ytsearch{depth}:{random.choice(global_vips)} türkçe", 'TREND', seen_ids))
+        queries.append((f"ytsearch{depth}:{random.choice(global_vips)} türkçe", 'TREND', seen_ids, None))
         
         # --- TR VIP POPÜLER (%10) ---
         tr_vips = ['Enes Batur', 'Ruhi Çenet', 'Alper Rende', 'Barış Özcan', 'Orkun Işıtmak']
-        queries.append((f"ytsearch{depth}:{random.choice(tr_vips)} son video", 'KEŞFET', seen_ids))
+        queries.append((f"ytsearch{depth}:{random.choice(tr_vips)} son video", 'KEŞFET', seen_ids, None))
 
     # PARALEL MOTOR CALISIYOR
     raw_results = []
