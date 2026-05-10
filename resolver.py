@@ -20,28 +20,35 @@ def get_ydl_instance():
         thread_local.ydl = yt_dlp.YoutubeDL(opts)
     return thread_local.ydl
 
-def is_trash(title, uploader):
-    """Sert Filtre: Shorts, Muzik, Reklam, Bot Etiketleri (#kesfet vb.)"""
+def is_trash(title, uploader, duration=None):
+    """Gelistirilmis Akilli Filtre: Muzik Sezgisi, Shorts, Reklam"""
     title = str(title).lower()
     uploader = str(uploader or "").lower()
     
-    # 1. Botlarin kullandigi ucuz etiketler (Hashtag Keşfet Tagları)
+    # 1. Botlarin kullandigi ucuz etiketler
     bot_tags = ['#keşfet', '#kesfet', '#fyp', '#trend', '#viral', '#shorts', '#short', '#reels']
     if any(tag in title for tag in bot_tags): return True
 
-    # 2. Muzik ve Klip Yasagi (Gelistirilmis)
-    music_keywords = [
-        'official video', 'official audio', 'lyric', 'music video', 'video klip',
-        'şarkı', 'müzik', 'klip', 'song', 'ft.', 'feat', 'prod.', 'remix', 'vevo'
-    ]
+    # 2. Klasik Muzik ve Klip Kelimeleri
+    music_keywords = ['official video', 'official audio', 'lyric', 'music video', 'video klip', 'şarkı', 'müzik', 'klip', 'song', 'ft.', 'feat', 'prod.', 'remix', 'vevo']
     if any(word in title for word in music_keywords): return True
     if uploader.endswith(' - topic'): return True
 
-    # 3. Reklam ve Tanitim Yasagi
+    # --- YENİ: MUZIK SEZGISI (Heuristic) ---
+    # Eger baslikta "Sanatci - Eser" yapisi varsa ve suresi sarkı kadarsa
+    if duration and 90 <= duration <= 330: # 1.5 dk ile 5.5 dk arasi
+        if ' - ' in title or ' | ' in title or ' – ' in title:
+            # Egitim, inceleme veya rehber degilse buyuk ihtimalle sarkidir
+            non_music = ['inceleme', 'haber', 'nasıl', 'rehber', 'vlog', 'ders', 'tutorial', 'review', 'guide']
+            if not any(w in title for w in non_music):
+                return True 
+
+    # 3. Reklam ve Tanitim
     ad_keywords = ['reklam', 'tanıtım', 'sponsorlu', 'iş birliği', 'fragman', 'trailer', 'teaser']
     if any(word in title for word in ad_keywords): return True
 
-    # 4. Diger Copler (Shorts, Edit, Clip)
+    # 4. Shorts ve Diger Copler
+    if duration and duration < 60: return True # Shorts korumasi
     other_trash = ['edit', 'clip', 'tiktok', 'whatsapp status', 'fan edit']
     if any(word in title for word in other_trash): return True
 
@@ -63,8 +70,9 @@ def fetch_query(q_tuple):
             
             title = e.get('title', '')
             uploader = e.get('uploader', 'YouTube')
+            duration = e.get('duration')
             
-            if not is_trash(title, uploader):
+            if not is_trash(title, uploader, duration):
                 res.append({
                     'id': vid, 'title': title,
                     'thumbnail': f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg",
@@ -170,5 +178,5 @@ def search_videos(query):
                 "id": e.get('id'), "title": e.get('title'),
                 "thumbnail": f"https://i.ytimg.com/vi/{e.get('id')}/hqdefault.jpg",
                 "uploader": e.get('uploader') or "YouTube"
-            } for e in results if e and not is_trash(e.get('title'), e.get('uploader'))]
+            } for e in results if e and not is_trash(e.get('title'), e.get('uploader'), e.get('duration'))]
     except: return []
