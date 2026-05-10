@@ -14,6 +14,7 @@ def get_ydl_instance(client='android'):
         'quiet': True, 
         'extract_flat': True, 
         'no_warnings': True,
+        'javascript_runtimes': ['node'], # Node.js'i bilmece cozucu olarak ata
         'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None,
         'extractor_args': {
             'youtube': {
@@ -146,6 +147,7 @@ def resolve_video(video_id):
                 'format': 'best[ext=mp4]/best',
                 'quiet': True,
                 'no_warnings': True,
+                'javascript_runtimes': ['node'],
                 'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None,
                 'extractor_args': {'youtube': {'player_client': [client]}},
                 'nocheckcertificate': True,
