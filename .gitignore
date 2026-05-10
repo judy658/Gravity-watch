@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+dist/
+build/
+.expo/
+*.log
+
+# Godot
+.godot/
+
+# Large files
+*.rar
+*.zip
+*.apk
+*.exe
+
+# System
+.DS_Store
+Thumbs.db
+
+# Private
+.env
+gravity_cookies.txt
+gravity_user_*.json
+memory/
+jarvis_backups/
+scratch/

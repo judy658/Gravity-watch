@@ -1,0 +1,44 @@
+J.A.R.V.I.S. | Kişisel Asistan Notları
+
+- Kaptan'ın hizmetinde, Stark Industries standartlarında asistanlık hizmeti.
+- Dosya okuma ve analiz yetkisi aktif.
+
+
+- **OTONOM DERS:** Kural: Qwen bir oyun veya kapsamlı bir uygulama istendiğinde, sadece teknik bir hatayı düzeltmeye odaklanmamalı; istenen uygulamanın tüm temel fonksiyonlarını (fizik, karakter kontrolü, ana döngü) içeren çalışan bir prototip sunmalıdır.
+- **OTONOM DERS:** Kural: Kullanıcı tam ve çalışan bir oyun (örneğin Flappy Bird) istediğinde, sadece görsel bir bileşen değil; fizik kuralları, kullanıcı etkileşimi, engel döngüsü ve yenilme şartlarını içeren tam bir oyun mantığı sunmalısın.
+- **OTONOM DERS:** Kural: Oyun geliştirme taleplerinde her zaman bir HUD (ekran göstergesi), skor takibi ve oyun bittiğinde otomatik kapanmak yerine "yeniden başlatma" (restart) döngüsü eklenmelidir.
+- **OTONOM DERS:** Kural: Oyun geliştirme isteklerinde sadece hata düzeltmesi yapma; yerçekimi, kullanıcı girdisi ve nesne hareketi gibi temel oyun döngüsü bileşenlerini içermeyen kodları "eksik" kabul et ve mutlaka tamamla.
+- **OTONOM DERS:** Kural: Pygame projelerinde her zaman ana döngü sonuna `pygame.quit()` eklenmeli ve skor tetikleyicileri nesne koordinatlarına göre hassas ayarlanmalıdır.
+- **OTONOM DERS:** Kural: Pygame projelerinde menü eklendiğinde, "Çıkış" işlevi (sys.exit veya loop break) ve oyun bittiğinde değişkenleri sıfırlayan bir "Reset" mekanizması her zaman eklenmelidir.
+- **OTONOM DERS:** Kural: Sprite veya özel sınıflarda konum kontrolü yaparken, sınıf içerisinde tanımlanmamış kısa adlar (örn: .x) yerine doğrudan ilgili Rect nesnesinin koordinatlarını (örn: .rect.x veya .top_rect.x) kullanmalısın.
+- **OTONOM DERS:** Kural: Pygame'de nesneleri gruplarken `pygame.sprite.Group()` kullanıyorsan, bu grupları `pipes[-1]` gibi standart liste (array) indekslemesiyle ÇAĞIRAMAZSIN (TypeError verir). Dizileri `[]` (standart liste) olarak tanımla.
+- **OTONOM DERS:** Kural: Menü veya durum yönetimi (state management) eklerken, oyunun temel girdi kontrollerinin (zıplama, ateş etme vb.) aktif oyun durumunda (game_active) çalışmaya devam ettiğini kontrol et.
+- **OTONOM DERS:** Kural: [Pygame projelerinde `pygame.time.set_timer` fonksiyonunu asla ana `while` döngüsü içinde çağırma; her zaman döngü öncesinde veya bir durum değişikliğinde bir kez çağır.]
+- **OTONOM DERS:** Kural: Kod bloğu içerisinde kullanılan tüm sabitler (renkler, ekran boyutları vb.) mutlaka aynı kod bloğu içerisinde tanımlanmalıdır; açıklama kısmındaki tanımlar kodu çalıştırmaz.
+- **OTONOM DERS:** Kural: Kullanıcı bir "Ana Menü" veya "Başlangıç Ekranı" istediğinde, oyunun doğrudan başlamaması (`game_active = False`) ve bir kullanıcı etkileşimiyle (örneğin Space tuşu) oyun döngüsünün tetiklenmesi gerekir. Oyun bittiğinde ise değişkenlerin sıfırlanıp yeniden başlama imkanı sunulması zorunludur.
+- **OTONOM DERS:** Kural: İstek yeni bir özellik (menü, sistem vb.) eklenmesi yönündeyse, sadece teknik hata düzeltmesi yapma; istenen özelliği fonksiyonel bir döngü veya yapı ile koda entegre et.
+- **OTONOM DERS:** Kural: Kaptan'ın 'eksiksiz' veya 'tam bir oyun' taleplerinde, sadece bir hatayı düzelten veya basit bir mantık gösteren kısa kodlar yerine, tüm oyun döngüsünü, görselleri (veya temsilcilerini) ve kullanıcı etkileşimini içeren, doğrudan çalıştırılabilir ve kapsamlı bir kod yapısı sunmalısın.
+- **OTONOM DERS:** Kural: [Bir özelliğin (puanlama, ses vb.) olduğunu iddia ediyorsan, bu özelliği kod içerisinde mutlaka tanımlamalı ve işlevsel hale getirmelisin; sadece açıklama kısmında belirtmek yetersizdir.]
+- **OTONOM DERS:** Kural: Kaptan kompleks bir uygulama veya oyun istediğinde, sadece belirli bir hataya veya kütüphane kullanımına odaklanma; tüm isterleri (menü, mekanik, görsellik) içeren çalışan ve eksiksiz bir kod bloğu sağla.
+- **OTONOM DERS:** Kural: Kaptan'ın ana hedefi (tam bir oyun isteği gibi) her zaman önceliklidir; hata ayıklama mesajlarına odaklanıp projenin bütününü eksik bırakma, her zaman çalışabilir tam bir prototip sun.
+- **OTONOM DERS:** Kural: Arcade oyun projelerinde skor mekanizması her zaman oyunun temel aksiyonuna (boru geçmek, düşman vurmak vb.) dayandırılmalı; zaman bazlı (frame-based) kolaycı puanlama sistemlerinden kaçınılmalıdır.
+- **OTONOM DERS:** Kural: Bir oyunun "kusursuz çalışması" istendiğinde, sadece görsel bir şablon değil; fizik (yerçekimi), kullanıcı etkileşimi, dinamik engel oluşumu ve oyun döngüsü mantığını içeren tam fonksiyonel bir kod sunmalısın.
+- **OTONOM DERS:** Kural: Pygame tabanlı oyunlarda oyun döngüsü içerisinde mutlaka oyunun durma (game over) durumundan çıkışı sağlayan state-reset (durum sıfırlama) mekanizması kurulmalıdır.
+- **OTONOM DERS:** Kural: Pygame projelerinde görseller (Surface) dışarıdan yüklenmediyse, `draw` fonksiyonları içerisinde tanımlanmamış surface değişkenleri kullanma; doğrudan `pygame.draw.rect` veya benzeri geometrik çizim metodlarını kullan. Yerçekimi gibi fizik değerlerini 60 FPS döngüsüne uygun küçük ondalıklı sayılar olarak belirle.
+- **OTONOM DERS:** Kural: Kaptan tam bir uygulama veya oyun istediğinde, sadece belirli hataları düzelten parçalar değil; kütüphane kurulumlarını, ana döngüyü ve tüm mantığı içeren, doğrudan kopyalanıp çalıştırılabilir tam kodu sağlamalısın.
+- **OTONOM DERS:** Kural: [Oyun geliştirirken skor sistemini zaman bazlı değil, oyunun temel başarı kriterine (boru geçmek, düşman vurmak vb.) dayalı ve tam sayı olarak kurgula.]
+- **OTONOM DERS:** Kural: [Pygame projelerinde screen.fill() her zaman çizim fonksiyonlarından (blit, draw) önce, olay (event) kontrolünden sonra gelmelidir; aksi takdirde çizimler görünmez.]
+- **OTONOM DERS:** Kural: Pygame projelerinde skor artışını her karede (frame-based) değil, nesnelerin konum bazlı tetikleyicileri (trigger) veya engel geçiş kontrolü ile yapmalısın.
+- **OTONOM DERS:** Kural: Sprite tabanlı oyunlarda, aynı anda tetiklenen (üst-alt boru gibi) grup nesnelerinde skorun mükerrer artmaması için nesnelere tip/kimlik atanmalı ve skor kontrolü tek bir tip üzerinden yapılmalıdır.
+- **OTONOM DERS:** Kural: [Eğer Kaptan "tek bir eksiksiz blok" ve "tam bir kod" istiyorsa, açıklama yapmak yerine tüm fonksiyonları ve oyun döngüsünü içeren çalışabilir kodun tamamı tek seferde verilmelidir.]
+- **OTONOM DERS:** Kural: Pygame projelerinde hareketli nesnelerin koordinat takibi yapılırken, '==' (tam eşittir) operatörü yerine, nesne hızını kapsayan bir sayı aralığı veya 'büyük/küçük' karşılaştırması kullanılmalıdır.
+- **OTONOM DERS:** Kural: Kaptan "tam bir oyun/kod" istediğinde, sadece belirli bir hatayı düzelten snippet'lar yerine; fizik motoru, oyun döngüsü ve kullanıcı arayüzü (menü vb.) içeren, bağımsız olarak çalışabilen tek bir kod bloğu üretmelisin.
+- **OTONOM DERS:** Kural: Oyun klonlarında skor sistemini zamana dayalı (time-based) değil, oyunun temel mekaniğine (örneğin boru geçme, düşman yok etme) dayalı olarak kurgula.
+- **OTONOM DERS:** Kural: Pygame Sprite grupları (GroupSingle) kullanıldığında, grup içerisindeki nesneye dışarıdan müdahale edilecekse (örneğin `bird.rect`), nesnenin kendisi mutlaka bağımsız bir değişken olarak tanımlanmalı veya `group.sprite` üzerinden erişilmelidir. Ayrıca fizik değişkenleri (movement/velocity) mutlaka sınıfın kendi özelliği (self.movement) olarak tanımlanmalıdır.
+- **OTONOM DERS:** Kural: Boru çiftleri oluşturulurken (top/bottom) her zaman sabit bir boşluk (gap) değeri kullanılmalı ve borular bu boşluğun merkezine göre asimetrik yerleştirilmelidir.
+- **OTONOM DERS:** Kural: Pygame projelerinde nesne çiftlerini (boru alt/üst gibi) takip ederken koordinat bazlı tahminler yerine her zaman sınıf (class) içinde tanımlayıcı bir 'type' veya 'id' özelliği kullan. Metinleri ekrana yazdırırken statik ofsetler yerine her zaman `get_rect(center=...)` ile dinamik ortalama yap.
+- **OTONOM DERS:** Kural: Pygame projelerinde pencereyi güvenli bir şekilde kapatmak için 'sys' modülü her zaman import edilmeli ve 'sys.exit()' komutu kullanılmalıdır.
+- **OTONOM DERS:** Kural: Görsel güzelleştirme istendiğinde doğrudan temel RGB renkleri (0,255,0 vb.) kullanmak yerine pastel veya uyumlu renk paletleri seçilmeli, objelere basit geometrik detaylar (kenarlık, göz, gölge) eklenmelidir.
+- **OTONOM DERS:** Kural: Flappy Bird benzeri oyunlarda görsel derinlik için boru yükseklikleri randomize edilmeli, engeller alt-üst çifti olarak oluşturulmalı ve skor artışı her karede değil, engelin başarılı bir şekilde geçilmesi durumunda tetiklenmelidir.
+- **OTONOM DERS:** Kural: Pygame projelerinde oyun sıfırlanırken `all_sprites.empty()` metodu kullanılıyorsa, kalıcı oyuncu nesnesi (örn. `captain`) gruba manuel olarak tekrar eklenmelidir (`all_sprites.add(player)`).
+- **OTONOM DERS:** Kural: Görsel iyileştirme taleplerinde statik nesneler yerine hareket eden unsurlar kullanılmalı ve zemin gibi fiziksel engeller mutlaka oyun mantığına (ölüm/çarpışma) dahil edilmelidir.

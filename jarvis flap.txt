@@ -1,0 +1,152 @@
+J.A.R.V.I.S. SİSTEM RAPORU - 19.04.2026 12:40:27
+Oturum Kimliği: active
+==========================================
+
+[JARVIS]:
+Sistem aktif edildi. Merhaba Kaptan, size nasıl yardımcı olabilirim?
+------------------------------------------
+[KAPTAN]:
+bana flapy bird yap
+------------------------------------------
+[JARVIS]:
+Tabii, Flappy Bird oyununu oluşturmak için temel bir fizik motoru ve oyun döngüsü geliştirelim. Bu örnekte Python ve Pygame kütüphanesini kullanacağız.
+
+Öncelikle, Pygame'i yüklemeniz gerekiyor:
+
+pip install pygame
+
+ Kopyala
+
+Ardından, aşağıdaki kodu kullanarak Flappy Bird oyununu oluşturabilirsiniz:
+
+import pygame
+import random
+
+# Pygame başlat
+pygame.init()
+
+# Ekran ayarları
+width, height = 400, 600
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Flappy Bird")
+
+# Renkler
+white = (255, 255, 255)
+black = (0, 0, 0)
+red = (255, 0, 0)
+
+# Flappy Bird ayarları
+bird_img = pygame.image.load("bird.png")  
+
+# Kus resmini yükleyin
+bird_width, bird_height = 34, 24
+bird_x, bird_y = width // 2 
+- bird_width // 2, height // 2 
+- bird_height // 2
+bird_velocity = 0
+gravity = 0.5
+
+# Toprak ayarları
+ground_img = pygame.image.load("ground.png")  
+
+# Toprak resmini yükleyin
+ground_width, ground_height = width, 100
+ground_x = 0
+ground_y = height 
+- ground_height
+
+# Tepeler ayarları
+pipe_img = pygame.image.load("pipe.png")  
+
+# Tüp resmini yükleyin
+pipe_width, pipe_height = 52, 320
+pipe_gap = 150
+pipes = []
+
+def create_pipe():
+    y = random.randint(-200, 150)
+    return [width, y], [width, y + pipe_gap + pipe_height]
+
+def move_pipes(pipes):
+    for pipe in pipes:
+        pipe[0][0] -= 3
+        pipe[1][0] -= 3
+
+def draw_pipes(pipes):
+    for pipe in pipes:
+        screen.blit(pipe_img, (pipe[0][0], pipe[0][1]))
+        screen.blit(pygame.transform.flip(pipe_img, False, True), (pipe[1][0], pipe[1][1]))
+
+def check_collision(pipes):
+    bird_rect = pygame.Rect(bird_x, bird_y, bird_width, bird_height)
+    for pipe in pipes:
+        top_pipe_rect = pygame.Rect(pipe[0][0], pipe[0][1], pipe_width, pipe_height)
+        bottom_pipe_rect = pygame.Rect(pipe[1][0], pipe[1][1], pipe_width, pipe_height)
+        if bird_rect.colliderect(top_pipe_rect) or bird_rect.colliderect(bottom_pipe_rect):
+            return True
+    if bird_y + bird_height >= ground_y:
+        return True
+    return False
+
+def game_loop():
+    global bird_velocity, pipes
+    clock = pygame.time.Clock()
+    running = True
+    score = 0
+
+    while running:
+        screen.fill(white)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    bird_velocity = -10
+
+        
+
+# Flappy Bird hareketi
+        bird_velocity += gravity
+        bird_y += bird_velocity
+
+        
+
+# Tepelerin hareketi ve oluşturma
+        move_pipes(pipes)
+        if pipes and pipes[0][0] < -pipe_width:
+            pipes.pop(0)
+            score += 1
+        if len(pipes) == 0 or pipes[-1][0] < width 
+- 200:
+            pipes.append(create_pipe())
+
+        
+
+# Çarpmayı kontrol et
+        if check_collision(pipes):
+            running = False
+
+        
+
+# Ekranı çiz
+        screen.blit(bird_img, (bird_x, bird_y))
+        draw_pipes(pipes)
+        screen.blit(ground_img, (ground_x, ground_y))
+
+        pygame.display.update()
+        clock.tick(30)
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    game_loop()
+
+ Kopyala
+
+Bu kodda:
+
+bird.png, ground.png, ve pipe.png resimlerini kendi bilgisayarınıza eklemeniz gerekiyor.
+Flappy Bird'in hareketi, tepelerin oluşturulması ve çarpmayı kontrol etme gibi temel işlevler yer almaktadır.
+
+Bu kodu çalıştırdığınızda, basit bir Flappy Bird oyunu görebilirsiniz. Umarım bu size yardımcı olur!
+------------------------------------------

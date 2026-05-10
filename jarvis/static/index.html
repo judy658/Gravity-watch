@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S | Stark Industries</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Markdown Rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- DOMPurify (Anti-HTML Injection) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+</head>
+<body>
+    <div class="hud-ring"></div>
+    <div id="drag-overlay" class="drag-overlay">
+        <div class="drag-content">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Görseli Buraya Bırakın</p>
+        </div>
+    </div>
+    
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="core-mini"></div>
+            <h1 class="sidebar-title">JARVIS</h1>
+        </div>
+        
+        <div style="padding: 0 20px 20px;">
+            <button class="input-action-btn" style="width: 100%; gap: 10px; background: var(--primary); color: #000; font-weight: 800;" onclick="newSession()">
+                <i class="fas fa-plus"></i> Yeni Sohbet
+            </button>
+        </div>
+        
+        <div class="history-list" id="history">
+            <!-- Tarihçe buraya gelecek -->
+            <div class="history-item">Sohbet Geçmişi</div>
+        </div>
+
+        <div style="padding: 0 20px 20px;">
+            <button class="input-action-btn" style="width: 100%; gap: 10px; margin-bottom: 10px;" onclick="exportSession()">
+                <i class="fas fa-file-export"></i> Sohbeti Dışarı Aktar
+            </button>
+            <button class="input-action-btn" style="width: 100%; gap: 10px;" onclick="clearHistory()">
+                <i class="fas fa-trash"></i> Hafızayı Temizle
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-container">
+        <!-- Research HUD Panel (Mesajların üzerinde sabit) -->
+        <div id="research-hud" class="research-hud">
+            <div class="hud-header">
+                <span><i class="fas fa-microchip"></i> DERİN ARAŞTIRMA BİRİMİ</span>
+                <div class="hud-header-right">
+                    <span class="hud-source-count"><i class="fas fa-database"></i> <span id="hud-source-num">0</span> kaynak</span>
+                    <button id="stop-research-btn" class="hud-stop-btn" onclick="stopResearch()">
+                        <i class="fas fa-stop"></i> DURDUR
+                    </button>
+                </div>
+                <div class="scan-line"></div>
+            </div>
+            <!-- Tur İlerleme Çemberleri -->
+            <div class="hud-rounds" id="hud-rounds">
+                <div class="hud-round-item" id="hud-r1"><div class="round-dot"></div><span>TUR 1</span></div>
+                <div class="hud-round-item" id="hud-r2"><div class="round-dot"></div><span>TUR 2</span></div>
+                <div class="hud-round-item" id="hud-r3"><div class="round-dot"></div><span>TUR 3</span></div>
+                <div class="hud-round-item" id="hud-r4"><div class="round-dot"></div><span>TUR 4</span></div>
+                <div class="hud-round-item" id="hud-r5"><div class="round-dot"></div><span>TUR 5</span></div>
+            </div>
+            <!-- Anlık Durum -->
+            <div id="hud-content" class="hud-content">
+                <i class="fas fa-satellite-dish fa-spin" style="margin-right:8px"></i> Sistem hazır...
+            </div>
+        </div>
+
+        <div class="chat-viewport" id="chat">
+            <div class="message ai">
+                Sistem aktif edildi. Merhaba Kaptan, size nasıl yardımcı olabilirim?
+            </div>
+        </div>
+
+        <div class="typing" id="typing">
+            <i class="fas fa-circle-notch fa-spin"></i> Jarvis yanıt veriyor...
+        </div>
+
+        <div class="input-section">
+            <div id="image-preview-container" style="display: none; margin-bottom: 15px; position: relative;">
+                <img id="image-preview" src="" style="max-height: 120px; border-radius: 12px; border: 1px solid var(--primary); box-shadow: 0 0 15px var(--primary-glow);">
+                <button onclick="clearImage()" style="position: absolute; top: -10px; left: -10px; width: 24px; height: 24px; border-radius: 50%; background: #ff0000; color: white; border: none; cursor: pointer; font-size: 12px;">×</button>
+            </div>
+            <div id="file-preview-container" style="display: none; margin-bottom: 15px; position: relative; background: rgba(0,210,255,0.05); border: 1px solid var(--primary); border-radius: 12px; padding: 12px;">
+                <div style="display:flex; align-items:center; gap:8px; color: var(--primary); font-size: 0.85rem; font-weight: 600;">
+                    <i class="fas fa-file-code"></i>
+                    <span id="file-preview-name">dosya.py</span>
+                    <span id="file-preview-size" style="opacity:0.6; font-weight:400;"></span>
+                </div>
+                <pre id="file-preview-content" style="max-height: 80px; overflow-y: auto; font-size: 0.7rem; margin-top: 8px; color: var(--text-dim); white-space: pre-wrap;"></pre>
+                <button onclick="clearFileAttachment()" style="position: absolute; top: -10px; right: -10px; width: 24px; height: 24px; border-radius: 50%; background: #ff0000; color: white; border: none; cursor: pointer; font-size: 12px;">×</button>
+            </div>
+            <div class="input-container">
+                <button class="input-action-btn" title="Görsel Yükle" onclick="document.getElementById('file-input').click()">
+                    <i class="fas fa-camera"></i>
+                </button>
+                <input type="file" id="file-input" hidden accept="image/*" onchange="uploadImage(this)">
+                <button class="input-action-btn" title="Kod/Belge Yükle (.py, .txt, .js)" onclick="document.getElementById('code-file-input').click()">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <input type="file" id="code-file-input" hidden accept=".py,.txt,.js,.ts,.tsx,.jsx,.html,.css,.json,.md,.gd" onchange="uploadCodeFile(this)">
+                
+                <textarea id="user-input" rows="1" placeholder="Bir şeyler yazın veya 'ara: konu' diyerek internette aratın..." autocomplete="off"></textarea>
+                
+                <button class="input-action-btn" id="voice-btn" title="Sesli Komut">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                
+                <div class="mode-selector">
+                    <button id="mode-normal" class="mode-btn active" onclick="setMode('normal')">Gündelik</button>
+                    <button id="mode-coding" class="mode-btn" onclick="setMode('coding')">Kodlama</button>
+                    <button id="mode-deep" class="mode-btn" onclick="setMode('deep')">Derin</button>
+                </div>
+
+                <button class="input-action-btn send-btn" id="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+        <div id="debug-console" class="debug-console">
+            <div class="console-header">
+                <span class="console-title"><i class="fas fa-terminal"></i> STARK DEBUGGER</span>
+                <span style="font-size: 0.6rem; opacity: 0.5;">v2.0</span>
+            </div>
+            <div id="console-body" class="console-body">
+                <div class="log-entry">Sistem hazır...</div>
+            </div>
+            <div class="console-scroll-bottom">AUTOSCROLL ON</div>
+        </div>
+    </main>
+
+    <script src="jarvis_core.js"></script>
+</body>
+</html>

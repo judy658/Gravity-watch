@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STARK INDUSTRIES | Masterwork Flappy</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="loader"></div>
+        <p>SİSTEMLER YÜKLENİYOR...</p>
+    </div>
+
+    <div id="game-ui">
+        <!-- Stark HUD -->
+        <div class="hud-top">
+            <div class="telemetry-box">
+                <span class="label">SİSTEM DURUMU:</span>
+                <span class="value green">AKTİF</span>
+            </div>
+            <div class="score-box">
+                <h1 id="score">00</h1>
+            </div>
+            <div class="telemetry-box">
+                <span class="label">RTX MOTORU:</span>
+                <span class="value cyan">STABLE</span>
+            </div>
+        </div>
+
+        <!-- Real-time Stats -->
+        <div class="stats-panel left">
+            <div class="stat-item">
+                <span class="label">İRTİFA (ALT):</span>
+                <span id="stat-alt" class="value">000</span>
+            </div>
+            <div class="stat-item">
+                <span class="label">HIZ (VEL):</span>
+                <span id="stat-vel" class="value">0.0</span>
+            </div>
+        </div>
+
+        <div class="stats-panel right">
+            <div class="stat-item">
+                <span class="label">MESAFE (DIST):</span>
+                <span id="stat-dist" class="value">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="label">ENERJİ (PWR):</span>
+                <div class="pwr-bar"><div id="pwr-fill"></div></div>
+            </div>
+        </div>
+
+        <!-- Screens -->
+        <div id="start-screen" class="overlay">
+            <div class="glass-card">
+                <div class="brand">STARK INDUSTRIES</div>
+                <h2>OTONOM UÇUŞ PROTOKOLÜ</h2>
+                <p>J.A.R.V.I.S. v6.2 | Masterwork Edition</p>
+                <div class="action-hint pulse">SPACE VEYA TIKLAMA İLE BAŞLAT</div>
+            </div>
+        </div>
+
+        <div id="game-over-screen" class="overlay hidden">
+            <div class="glass-card danger">
+                <h2>KRİTİK HATA</h2>
+                <p>SİSTEM ÇÖKTÜ - UÇUŞ VERİSİ KAYDEDİLDİ</p>
+                <div class="final-score">PUAN: <span id="final-score-val">0</span></div>
+                <div class="action-hint">YENİDEN BAŞLATMAK İÇİN TIKLA</div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script src="master.js"></script>
+</body>
+</html>

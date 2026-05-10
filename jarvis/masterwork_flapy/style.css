@@ -1,0 +1,198 @@
+:root {
+    --primary: #00d2ff;
+    --secondary: #004444;
+    --danger: #ef4444;
+    --bg: #020617;
+    --glass: rgba(15, 23, 42, 0.7);
+    --border: rgba(0, 210, 255, 0.3);
+}
+
+* {
+    box-sizing: border-box;
+    user-select: none;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg);
+    color: #fff;
+    font-family: 'Rajdhani', sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#gameCanvas {
+    display: block;
+    box-shadow: 0 0 100px rgba(0, 210, 255, 0.15);
+    background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
+}
+
+/* UI Overlay */
+#game-ui {
+    position: absolute;
+    width: 400px; /* Canvas width match */
+    height: 600px; /* Canvas height match */
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Stark HUD Top */
+.hud-top {
+    position: absolute;
+    top: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.telemetry-box {
+    font-size: 10px;
+    letter-spacing: 1px;
+    background: var(--glass);
+    padding: 5px 10px;
+    border-left: 2px solid var(--primary);
+    backdrop-filter: blur(5px);
+}
+
+.telemetry-box .label { opacity: 0.6; margin-right: 5px; }
+.telemetry-box .value { font-weight: 700; }
+.value.green { color: #10b981; text-shadow: 0 0 5px #10b981; }
+.value.cyan { color: var(--primary); text-shadow: 0 0 5px var(--primary); }
+
+#score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    margin: 0;
+    color: #fff;
+    text-shadow: 0 0 15px var(--primary);
+}
+
+/* Stats Panels */
+.stats-panel {
+    position: absolute;
+    bottom: 30px;
+    background: var(--glass);
+    padding: 10px;
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    width: 120px;
+    pointer-events: auto;
+}
+
+.stats-panel.left { left: 15px; border-radius: 0 10px 10px 0; border-left: 3px solid var(--primary); }
+.stats-panel.right { right: 15px; border-radius: 10px 0 0 10px; border-right: 3px solid var(--primary); }
+
+.stat-item {
+    margin-bottom: 8px;
+}
+
+.stat-item .label {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 1px;
+    opacity: 0.7;
+    margin-bottom: 2px;
+}
+
+.stat-item .value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.pwr-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    margin-top: 4px;
+}
+
+#pwr-fill {
+    width: 100%;
+    height: 100%;
+    background: var(--primary);
+    box-shadow: 0 0 10px var(--primary);
+}
+
+/* Overlays & Cards */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: auto;
+    background: rgba(2, 6, 23, 0.4);
+    z-index: 20;
+}
+
+.glass-card {
+    background: var(--glass);
+    padding: 30px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    text-align: center;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 0 50px rgba(0, 210, 255, 0.2);
+    width: 80%;
+}
+
+.glass-card.danger { border-color: var(--danger); box-shadow: 0 0 50px rgba(239, 68, 68, 0.2); }
+
+.brand { font-size: 10px; letter-spacing: 5px; opacity: 0.5; margin-bottom: 10px; text-transform: uppercase; }
+h2 { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; margin: 0 0 10px; color: var(--primary); }
+p { font-size: 0.9rem; opacity: 0.8; margin-bottom: 20px; }
+
+.action-hint { font-size: 0.8rem; font-weight: 700; color: #fff; letter-spacing: 1px; }
+
+.final-score { font-size: 1.5rem; font-weight: 700; margin-bottom: 20px; color: #fff; }
+
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    transition: opacity 0.5s ease;
+}
+
+.loader {
+    width: 48px;
+    height: 48px;
+    border: 5px solid #FFF;
+    border-bottom-color: var(--primary);
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes rotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.pulse { animation: pulseAnim 1.5s infinite; }
+@keyframes pulseAnim {
+    0% { opacity: 0.4; transform: scale(0.98); }
+    50% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0.4; transform: scale(0.98); }
+}
+
+.hidden { display: none !important; }
