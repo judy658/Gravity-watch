@@ -58,36 +58,55 @@ def resolve_video(video_id):
         return {"error": str(e)}
 
 def get_home_feed(user_email=None, page=1):
-    """Ana sayfa icin karma algoritma"""
+    """Ana sayfa icin karma algoritma - HIZLANDIRILMIS"""
     cache_key = f"home_{page}"
     if cache_key in HOME_FEED_CACHE:
         data, ts = HOME_FEED_CACHE[cache_key]
         if time.time() - ts < CACHE_TTL:
             return data
 
-    # Standart kesif listesi (Genel populer videolar)
-    search_queries = ["trending music", "new technology", "science discoveries", "gaming news"]
+    # Yedek Liste (Eger YT-DLP cok yavas kalirsa uygulama bos gorunmesin)
+    fallback_videos = [
+        {"id": "dQw4w9WgXcQ", "title": "Never Gonna Give You Up", "thumbnail": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg", "uploader": "Rick Astley", "label": "CLASSIC"},
+        {"id": "jNQXAC9IVRw", "title": "Me at the zoo", "thumbnail": "https://i.ytimg.com/vi/jNQXAC9IVRw/hqdefault.jpg", "uploader": "jawed", "label": "FIRST"}
+    ]
+
+    # Standart kesif listesi - Arama sayisini 20'den 12'ye dusurduk (Hiz icin)
+    search_queries = ["trending", "popular music", "tech news", "space discovery"]
     query = random.choice(search_queries)
     
-    with get_ydl_instance() as ydl:
-        try:
-            results = ydl.extract_info(f"ytsearch20:{query}", download=False).get('entries', [])
+    # Zaman asimi ekleyerek sunucuyu kitlemeyi onle
+    ydl_opts = {
+        'quiet': True,
+        'extract_flat': True, # Sadece metadata (HIZLI)
+        'force_generic_extractor': False,
+        'socket_timeout': 10 # 10 saniye sonra birak
+    }
+    if os.path.exists(COOKIES_FILE):
+        ydl_opts['cookiefile'] = COOKIES_FILE
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            results = ydl.extract_info(f"ytsearch12:{query}", download=False).get('entries', [])
             feed = []
             for entry in results:
                 if not entry: continue
                 feed.append({
                     "id": entry.get('id'),
                     "title": entry.get('title'),
-                    "thumbnail": entry.get('thumbnail'),
-                    "uploader": entry.get('uploader'),
+                    "thumbnail": entry.get('thumbnail') or f"https://i.ytimg.com/vi/{entry.get('id')}/hqdefault.jpg",
+                    "uploader": entry.get('uploader') or "YouTube",
                     "channel_id": entry.get('channel_id'),
                     "label": "DISCOVER"
                 })
             
+            if not feed: return fallback_videos # Eger bos gelirse yedekleri gonder
+            
             HOME_FEED_CACHE[cache_key] = (feed, time.time())
             return feed
-        except:
-            return []
+    except Exception as e:
+        print(f"!!! Home Feed Error: {e}")
+        return fallback_videos
 
 def search_videos(query):
     if not query: return []
