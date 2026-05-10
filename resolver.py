@@ -38,14 +38,25 @@ def resolve_video(video_id):
         return {"error": str(e)}
 
 def fetch_safe_videos(ydl, query, count, seen_ids, label):
-    """Muzik olmayan, gorulmemis videolari toplar"""
+    """Muzik olmayan, gorulmemis ve kanal onayli videolari toplar"""
     results = []
-    # Ihtiyactan biraz fazla ara (Filtreleme payi icin)
-    search_res = ydl.extract_info(f"ytsearch{count + 10}:{query}", download=False).get('entries', [])
+    # İmpoosterlari engellemek icin arama terimini daha spesifik yap
+    search_query = f"intitle:{query}" if label == "ABONELIK" else query
+    
+    search_res = ydl.extract_info(f"ytsearch{count + 15}:{search_query}", download=False).get('entries', [])
     for entry in search_res:
         if not entry: continue
         if entry.get('id') in seen_ids: continue
         if is_music_video(entry): continue
+        
+        uploader = entry.get('uploader', '').lower()
+        query_clean = query.lower()
+        
+        # --- KIMLIK KONTROLU (ABONELIK ICIN) ---
+        if label == "ABONELIK":
+            # Kanal ismi yukleyici isminde gecmeli veya tam tersi (kucuk harf duyarsiz)
+            if query_clean not in uploader and uploader not in query_clean:
+                continue 
         
         results.append({
             "id": entry.get('id'),
