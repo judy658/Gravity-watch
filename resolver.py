@@ -5,6 +5,7 @@ import random
 import concurrent.futures
 import threading
 import re
+import requests
 
 COOKIES_FILE = "gravity_cookies.txt"
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
@@ -14,7 +15,7 @@ def get_ydl_instance(client='android'):
         'quiet': True, 
         'extract_flat': True, 
         'no_warnings': True,
-        'javascript_runtimes': ['node'], # Node.js'i bilmece cozucu olarak ata
+        'javascript_runtimes': ['node'],
         'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None,
         'extractor_args': {
             'youtube': {
@@ -134,16 +135,14 @@ def get_home_feed(user_data=None, page=1):
     return interleaved[:20]
 
 def resolve_video(video_id):
-    """YUKSEK KALITE & BOT SAVAR: android_vr + cookies ile 1080p kovalama"""
+    """BOT SAVAR (V2): Kendi gucumuz yetmezse Cobalt yardima kosar"""
     url = f"https://www.youtube.com/watch?v={video_id}"
     
-    # android_vr istemcisi 1080p progressive (tek parca) linkler icin en iyisidir
+    # ADIM 1: Kendi Manifest Hunter stratejimiz
     clients = ['android_vr', 'ios', 'android', 'mweb']
-    
     for client in clients:
         try:
             ydl_opts = {
-                # Progressive (video+audio) formatlari oncelikle
                 'format': 'best[ext=mp4]/best',
                 'quiet': True,
                 'no_warnings': True,
@@ -151,28 +150,30 @@ def resolve_video(video_id):
                 'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None,
                 'extractor_args': {'youtube': {'player_client': [client]}},
                 'nocheckcertificate': True,
-                'socket_timeout': 10
+                'socket_timeout': 7
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 if info and info.get('url'):
                     return {
-                        "id": video_id, "title": info.get('title'), "thumbnail": info.get('thumbnail'),
-                        "uploader": info.get('uploader'), "best_url": info.get('url'),
-                        "qualities": {f"{f.get('height')}p": f.get('url') for f in info.get('formats', []) if f.get('height') and f.get('url')}
+                        "id": video_id, "title": info.get('title'), "best_url": info.get('url'),
+                        "uploader": info.get('uploader')
                     }
-        except Exception as e:
-            print(f"!!! Client {client} failed for {video_id}: {e}")
-            continue
+        except: continue
             
-    # Hicbir sey olmazsa 'best' formatina geri don
+    # ADIM 2: Cobalt API (Yedek Plan - Hayat Kurtaran)
+    print(f"!!! Kendi gucumuz yetmedi, Cobalt devreye giriyor: {video_id}")
     try:
-        with yt_dlp.YoutubeDL({'format': 'best', 'quiet': True, 'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None}) as ydl_final:
-            info = ydl_final.extract_info(url, download=False)
-            if info: return {"id": video_id, "best_url": info.get('url'), "title": info.get('title')}
+        cobalt_res = requests.post("https://api.cobalt.tools/api/json", 
+            headers={"Accept": "application/json", "Content-Type": "application/json"},
+            json={"url": url, "videoQuality": "1080"}, timeout=10)
+        if cobalt_res.status_code == 200:
+            c_data = cobalt_res.json()
+            if c_data.get('url'):
+                return {"id": video_id, "best_url": c_data['url'], "title": "Cobalt HD"}
     except: pass
     
-    return {"error": "Video cozulemedi. Lutfen cerezleri kontrol edin."}
+    return {"error": "Video kilitli. Lutfen baska bir video deneyin veya cerezleri tazeleyin."}
 
 def search_videos(query):
     if not query: return []
