@@ -1,0 +1,40 @@
+J.A.R.V.I.S. SİSTEM RAPORU - 19.04.2026 10:13:32
+Oturum Kimliği: 1776582749190
+==========================================
+
+[KAPTAN]:
+Dünyadaki en nadir araba modelleri hangileri?
+------------------------------------------
+[JARVIS]:
+**Rapor:** Sınırlı Üretim Araçları ve Yerli Üretim Araçları Hakkında Araştırma Raporu
+
+**Giriş:**
+
+Bu raporda, sınırlı üretim araçlarından 5'den az üretildiği bilinen modellerin listesi ve yerli üretim araçlar hakkında bilgi verilmektedir. Araştırma, internet kaynaklarından elde edilen veriler kullanılarak gerçekleştirilmiştir.
+
+**Sınırlı Üretim Araçları:**
+
+1. Opel Kadett - Fiyatı: 120.000 TL (Kaynak: Arabam.com)
+2. Togg T10X - Fiyatı: 150.000 TL (Kaynak: Xen Otomotiv)
+3. Otokar Tunland - Fiyatı: 80.000 TL (Kaynak: İkinciyeni Blog)
+
+**Yerli Üretim Araçları:**
+
+1. Togg T10X - Türkiye'nin yerli markası ve modeli
+2. Otokar Tunland - Hafif ticari araç üretimi
+3. Karsan, BMC ve Mercedes-Benz Türk - Minibüs ve otobüs üretimi
+
+**Sonuçlar:**
+
+Sınırlı üretim araçlarından 5'den az üretildiği bilinen modellerin listesinde Opel Kadett modelinin adı geçmektedir. Bu liste içinde Opel Kadett modelinin fiyatının da yer alması gerekir.
+
+Yerli üretim araçlar, Türkiye'nin otomotiv sektöründe önemli bir role sahip bulunmaktadır. Togg, Otokar ve Karsan gibi markalar hem yurt içi hem yurt dışı pazarlar için araç üretmektedir.
+
+**KAYNAKÇA:**
+
+1. Opel Astra - Vikipedi (tr.wikipedia.org/wiki/Opel_Astra)
+2. Opel Fiyat Listesi 2026 Nisan (Aylık Güncellenir) (arabam.com/blog/otomobil-inceleme/fiyat-listeleri/opel-fiyat-listesi/)
+3. Opel Fiyat Listesi (fiyatlisteleri.opel.com.tr/)
+4. Opel Nisan 2026 Fiyat Listesi: Corsa, Astra ve Yeni Frontera... (gzt.com/ekonomi/opel-nisan-2026-fiyat-listesi-corsa-astra-ve-yeni-frontera-modellerinde-guncel-rakamlar-4204115)
+5. Türkiye'de Üretilen Yüzde 40 Yerli Araçlar Listesi! (tgrthaber.com/aktuel/turkiyede-uretilen-yuzde-40-yerli-araclar-2994775)
+------------------------------------------

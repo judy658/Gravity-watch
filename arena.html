@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Evrim Arenası (Evolution Arena)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Socket.io -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #050508;
+      --surface: rgba(19, 19, 26, 0.7);
+      --surface-border: rgba(124, 92, 252, 0.3);
+      --accent: #7c5cfc;
+      --accent-glow: rgba(124, 92, 252, 0.6);
+      --accent2: #fc5c7d;
+      --text: #ffffff;
+      --muted: #8b8b9d;
+      --gold: #ffd166;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none; /* Mobilde yazıları seçmeyi engeller */
+    }
+
+    /* Arka Plan Efektleri */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(124, 92, 252, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(124, 92, 252, 0.05) 1px, transparent 1px);
+      background-size: 30px 30px;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .glow-orb {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 60%);
+      border-radius: 50%;
+      filter: blur(40px);
+      z-index: 0;
+      pointer-events: none;
+      animation: float 6s ease-in-out infinite alternate;
+    }
+    .orb-1 { top: -100px; left: -100px; }
+    .orb-2 { bottom: -150px; right: -50px; background: radial-gradient(circle, rgba(252,92,125,0.4) 0%, transparent 60%); animation-delay: -3s; }
+
+    @keyframes float {
+      0% { transform: translateY(0px) scale(1); }
+      100% { transform: translateY(30px) scale(1.1); }
+    }
+
+    /* --------------------------
+       AUTH EKRANI (DevStore Login)
+       -------------------------- */
+    #auth-screen {
+      position: relative;
+      z-index: 100;
+      background: rgba(10, 10, 15, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--surface-border);
+      border-radius: 24px;
+      padding: 40px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      display: none; /* Js ile açılacak */
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .auth-title { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 8px; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .auth-sub { font-size: 0.9rem; color: var(--muted); margin-bottom: 24px; }
+    .auth-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--surface-border); border-radius: 12px; padding: 14px; color: #fff; font-family: 'DM Sans', sans-serif; outline: none; margin-bottom: 16px; transition: 0.2s; }
+    .auth-input:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+    .auth-btn { width: 100%; background: linear-gradient(135deg, var(--accent), #9b7eff); border: none; padding: 14px; border-radius: 12px; color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; font-family: 'DM Sans', sans-serif; }
+    .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px var(--accent-glow); }
+    #auth-msg { margin-top: 16px; font-size: 0.85rem; min-height: 20px; color: var(--accent2); }
+
+    /* --------------------------
+       OYUN ANA MENÜSÜ
+       -------------------------- */
+    #game-ui {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: none; /* Js ile açılacak */
+      padding: 20px;
+      pointer-events: none; /* Sadece butonlar tıklanabilsin diye */
+    }
+    
+    .ui-element {
+      pointer-events: auto; /* UI elemanları tıklanabilir */
+      background: var(--surface);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
+
+    /* Sol Üst - Profil */
+    .profile-container {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+    .profile-container:hover { border-color: var(--accent); background: rgba(124, 92, 252, 0.1); }
+    .avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; border: 2px solid #fff; }
+    .profile-info { display: flex; flex-direction: column; }
+    .player-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: 0.5px; }
+    .player-level { font-size: 0.75rem; color: var(--gold); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+
+    /* Sol Orta - Karakterler */
+    .btn-characters {
+      position: absolute;
+      top: 50%;
+      left: 20px;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 14px;
+      gap: 8px;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .btn-characters:hover { border-color: var(--accent); transform: translateY(-50%) scale(1.05); }
+    .btn-icon { font-size: 2rem; }
+    .btn-label { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Sol Alt - Pass (Ödül Yolu) */
+    .btn-pass {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      cursor: pointer;
+      background: linear-gradient(45deg, rgba(255, 209, 102, 0.1), rgba(255, 209, 102, 0.05));
+      border-color: rgba(255, 209, 102, 0.4);
+    }
+    .btn-pass:hover { border-color: var(--gold); box-shadow: 0 0 20px rgba(255,209,102,0.3); transform: scale(1.02); }
+
+    /* Sağ Alt - OYNA ve Mod */
+    .play-container {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+    }
+    .btn-mode {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .btn-mode:hover { border-color: var(--accent); }
+    
+    .btn-play {
+      background: linear-gradient(135deg, #ffd166, #ff9a3c);
+      color: #000;
+      border: none;
+      border-radius: 20px;
+      padding: 18px 60px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 2rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      pointer-events: auto;
+      box-shadow: 0 10px 30px rgba(255, 209, 102, 0.4);
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-play:hover { transform: scale(1.05) translateY(-5px); box-shadow: 0 15px 40px rgba(255, 209, 102, 0.6); }
+    .btn-play:active { transform: scale(0.95); }
+
+    /* Mobil Düzenlemeler */
+    @media (max-width: 768px) {
+      .play-container { bottom: 15px; right: 15px; }
+      .btn-play { padding: 14px 40px; font-size: 1.6rem; }
+      .btn-pass { bottom: 15px; left: 15px; padding: 10px 16px; }
+      .profile-container { top: 15px; left: 15px; padding: 8px 12px; }
+      .btn-characters { left: 15px; padding: 16px 10px; }
+      .btn-icon { font-size: 1.6rem; }
+      .btn-label { font-size: 0.75rem; }
+    }
+
+    /* Modal / Pop-up (Geliştirme aşamasında uyarıları için) */
+    .game-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+    }
+    .game-modal-content {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 24px;
+      padding: 40px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .modal-close {
+      margin-top: 24px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: 0.2s;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.2); }
+
+    /* --------------------------
+       OYUN ALANI (CANVAS & JOYSTICK)
+       -------------------------- */
+    #game-arena {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      background: var(--bg);
+    }
+    #gameCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .exit-game-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(252, 92, 125, 0.2);
+      border: 1px solid var(--accent2);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 60;
+      font-family: 'DM Sans', sans-serif;
+      transition: 0.2s;
+    }
+    .exit-game-btn:hover { background: var(--accent2); }
+    
+    #joystick-zone {
+      position: absolute;
+      bottom: 40px;
+      left: 40px;
+      width: 140px;
+      height: 140px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      display: none; /* Sadece mobilde */
+      touch-action: none;
+      z-index: 60;
+    }
+    #joystick-knob {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 50px;
+      height: 50px;
+      background: var(--accent);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    
+    /* NİŞAN JOYSTICK (SAĞ) */
+    #joystick-aim-zone {
+      position: absolute;
+      bottom: 40px;
+      right: 40px;
+      width: 140px;
+      height: 140px;
+      background: rgba(252, 92, 125, 0.05);
+      border: 2px solid rgba(252, 92, 125, 0.2);
+      border-radius: 50%;
+      display: none;
+      touch-action: none;
+      z-index: 60;
+    }
+    #joystick-aim-knob {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 50px;
+      height: 50px;
+      background: #fc5c7d;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      box-shadow: 0 0 20px rgba(252, 92, 125, 0.5);
+    }
+    
+    @media (max-width: 768px) {
+      #joystick-zone { display: block; }
+      #joystick-aim-zone { display: block; }
+    }
+
+    /* --------------------------
+       ALT EKRANLAR (Savaşçılar, Profil vb.)
+       -------------------------- */
+    .full-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      background: var(--bg);
+      display: none; /* JS ile açılır */
+      flex-direction: column;
+      animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    @keyframes slideUp {
+      0% { transform: translateY(100%); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    .screen-header {
+      display: flex;
+      align-items: center;
+      padding: 20px;
+      background: rgba(10, 10, 15, 0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--surface-border);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    .back-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      margin-right: 20px;
+      transition: 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.2); }
+    .screen-title { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--text); }
+    
+    .screen-content {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* Karakter Grid */
+    .char-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 16px;
+    }
+    .char-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .char-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(124, 92, 252, 0.2); }
+    .char-card.locked { opacity: 0.5; filter: grayscale(100%); cursor: not-allowed; }
+    .char-card.locked:hover { transform: none; border-color: var(--surface-border); box-shadow: none; }
+    .char-img { width: 80px; height: 80px; background: rgba(0,0,0,0.4); border-radius: 50%; margin: 0 auto 12px; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; }
+    .char-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+    .char-role { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Mod Seçimi Kartları */
+    .mode-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: 0.2s;
+    }
+    .mode-card:hover { border-color: var(--accent); background: rgba(124, 92, 252, 0.1); }
+    .mode-icon { font-size: 2.5rem; }
+    .mode-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.2rem; margin-bottom: 4px; color: #fff; }
+    .mode-desc { font-size: 0.8rem; color: var(--muted); }
+
+    /* Profil ve Pass İçerikleri */
+    .stat-box { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+    .stat-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--accent); }
+    
+    .pass-track { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 20px; }
+    .pass-tier { flex-shrink: 0; width: 120px; background: var(--surface); border: 1px solid var(--surface-border); border-radius: 16px; padding: 16px; text-align: center; }
+    .pass-tier.active { border-color: var(--gold); box-shadow: 0 0 15px rgba(255, 209, 102, 0.3); }
+  </style>
+</head>
+<body>
+
+  <!-- Arka Plan Süsleri -->
+  <div class="bg-grid"></div>
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <!-- AUTH EKRANI -->
+  <div id="auth-screen">
+    <div class="auth-title">EVOLUTION</div>
+    <div class="auth-sub">ARENA</div>
+    <div style="font-size:0.8rem; color:var(--muted); margin-bottom: 20px;">DevStore hesabınla giriş yap</div>
+    
+    <input type="email" id="login-email" class="auth-input" placeholder="ornek@email.com" />
+    <input type="password" id="login-pass" class="auth-input" placeholder="Şifreniz" />
+    <button class="auth-btn" id="login-btn" onclick="doLogin()">Oyuna Gir</button>
+    <button class="auth-btn" id="register-btn" onclick="doRegister()" style="margin-top:10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">Yeni Kayıt Ol</button>
+    
+    <div id="auth-msg"></div>
+  </div>
+
+  <!-- OYUN ANA MENÜSÜ -->
+  <div id="game-ui">
+    
+    <!-- Profil -->
+    <div class="ui-element profile-container" onclick="openScreen('screen-profile')">
+      <div class="avatar" id="user-avatar">?</div>
+      <div class="profile-info">
+        <span class="player-name" id="user-name">Oyuncu</span>
+        <span class="player-level">⭐ Seviye 1</span>
+      </div>
+    </div>
+
+    <!-- Karakterler -->
+    <div class="ui-element btn-characters" onclick="openScreen('screen-characters')">
+      <div class="btn-icon">🦸‍♂️</div>
+      <div class="btn-label">Savaşçılar</div>
+    </div>
+
+    <!-- Pass -->
+    <div class="ui-element btn-pass" onclick="openScreen('screen-pass')">
+      <div style="font-size: 1.5rem;">🎁</div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;color:var(--gold)">EVOLUTION PASS</div>
+        <div style="font-size:0.75rem;color:var(--muted)">Kademe 1</div>
+      </div>
+    </div>
+
+    <!-- Oyna / Mod -->
+    <div class="play-container">
+      <div class="ui-element btn-mode" onclick="openModeModal()">
+        <span id="current-mode-text">🗺️ Rogue-Brawler</span>
+        <span style="color:var(--accent); margin-left:8px;">Değiştir ➔</span>
+      </div>
+      <button class="btn-play" onclick="startGame()">OYNA</button>
+    </div>
+
+  </div>
+
+  <!-- ALT EKRANLAR -->
+  
+  <!-- Savaşçılar Ekranı -->
+  <div class="full-screen" id="screen-characters">
+    <div class="screen-header">
+      <button class="back-btn" onclick="goBack()">← Geri</button>
+      <div class="screen-title">Savaşçılar</div>
+    </div>
+    <div class="screen-content">
+      <div class="char-grid">
+        <div class="char-card">
+          <img src="assets/acemi.png" class="char-img" alt="Acemi" />
+          <div class="char-name">Acemi</div>
+          <div class="char-role">Savaşçı</div>
+        </div>
+        <div class="char-card locked">
+          <img src="assets/kivilcim.png" class="char-img" alt="Kıvılcım" />
+          <div class="char-name">Kıvılcım</div>
+          <div class="char-role">Büyücü</div>
+        </div>
+        <div class="char-card locked">
+          <img src="assets/titan.png" class="char-img" alt="Titan" />
+          <div class="char-name">Titan</div>
+          <div class="char-role">Tank</div>
+        </div>
+        <div class="char-card locked">
+          <img src="assets/golge.png" class="char-img" alt="Gölge" />
+          <div class="char-name">Gölge</div>
+          <div class="char-role">Suikastçı</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profil Ekranı -->
+  <div class="full-screen" id="screen-profile">
+    <div class="screen-header">
+      <button class="back-btn" onclick="goBack()">← Geri</button>
+      <div class="screen-title">Oyuncu Profili</div>
+    </div>
+    <div class="screen-content">
+      <div class="stat-box" style="display:flex; align-items:center; gap:20px;">
+        <div class="avatar" style="width:80px; height:80px; font-size:2.5rem;" id="profile-avatar">?</div>
+        <div>
+          <h2 id="profile-name" style="font-family:'Syne',sans-serif; margin-bottom:4px;">Oyuncu</h2>
+          <div style="color:var(--gold); font-weight:600;">⭐ Seviye 1 (0/1000 XP)</div>
+        </div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">0</div>
+        <div style="color:var(--muted); font-size:0.85rem;">Kazanılan Maç</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">0</div>
+        <div style="color:var(--muted); font-size:0.85rem;">Toplam Altın</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pass Ekranı -->
+  <div class="full-screen" id="screen-pass">
+    <div class="screen-header">
+      <button class="back-btn" onclick="goBack()">← Geri</button>
+      <div class="screen-title" style="color:var(--gold);">Evolution Pass</div>
+    </div>
+    <div class="screen-content">
+      <p style="margin-bottom:20px; color:var(--muted);">Maç oynadıkça XP kazan ve ödüllerin kilidini aç!</p>
+      <div class="pass-track">
+        <div class="pass-tier active">
+          <div style="font-size:2rem; margin-bottom:8px;">💰</div>
+          <div style="font-weight:700;">100 Altın</div>
+          <div style="font-size:0.7rem; color:var(--muted); margin-top:4px;">Kademe 1 (Açık)</div>
+        </div>
+        <div class="pass-tier">
+          <div style="font-size:2rem; margin-bottom:8px;">📦</div>
+          <div style="font-weight:700;">Savaş Kutusu</div>
+          <div style="font-size:0.7rem; color:var(--muted); margin-top:4px;">Kademe 2 (Kilitli)</div>
+        </div>
+        <div class="pass-tier">
+          <div style="font-size:2rem; margin-bottom:8px;">🔥</div>
+          <div style="font-weight:700;">Kıvılcım</div>
+          <div style="font-size:0.7rem; color:var(--muted); margin-top:4px;">Kademe 3 (Kilitli)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mod Seçimi Modal'ı -->
+  <div class="game-modal" id="mode-modal">
+    <div class="game-modal-content" style="max-width: 500px;">
+      <h2 style="font-family:'Syne',sans-serif;font-weight:800;margin-bottom:20px;">Mod Seçimi</h2>
+      
+      <div class="mode-card" onclick="selectMode('🗺️ Rogue-Brawler')">
+        <div class="mode-icon">🗺️</div>
+        <div>
+          <div class="mode-title">Rogue-Brawler</div>
+          <div class="mode-desc">Hayatta kal, kutuları kır, seviye atla ve kendi kombilasyonunu yarat! (Maç içi evrim)</div>
+        </div>
+      </div>
+
+      <div class="mode-card" onclick="selectMode('💰 Bounty Arena')">
+        <div class="mode-icon">💰</div>
+        <div>
+          <div class="mode-title" style="color:var(--gold);">Bounty Arena</div>
+          <div class="mode-desc">Giriş ücreti: 100 Altın. Kazanan ortadaki tüm parayı alır! Yüksek risk, yüksek ödül.</div>
+        </div>
+      </div>
+
+      <button class="modal-close" onclick="closeModeModal()">Kapat</button>
+    </div>
+  </div>
+
+  <!-- BİLGİ MODALI -->
+  <div class="game-modal" id="info-modal">
+    <div class="game-modal-content">
+      <div style="font-size: 2.5rem; margin-bottom: 12px;">🚧</div>
+      <h2 id="modal-title" style="font-family:'Syne',sans-serif;font-weight:800;margin-bottom:12px;color:var(--accent)">Başlık</h2>
+      <p id="modal-desc" style="color:var(--muted);font-size:0.95rem;line-height:1.5;"></p>
+      <button class="modal-close" onclick="closeModal()">Kapat</button>
+    </div>
+  </div>
+
+    <!-- Kill Feed -->
+    <div id="kill-feed" style="position:absolute; top:20px; right:20px; z-index:70; pointer-events:none; font-family:'DM Sans',sans-serif; color:#fff; font-size:0.85rem; display:flex; flex-direction:column; gap:4px;"></div>
+
+  <!-- OYUN ALANI (CANVAS) -->
+  <div id="game-arena">
+    <button class="exit-game-btn" onclick="exitGame()">KAPAT</button>
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- Hareket Joystick (Sol) -->
+    <div id="joystick-zone">
+      <div id="joystick-knob"></div>
+    </div>
+    
+    <!-- Nişan Joystick (Sağ) -->
+    <div id="joystick-aim-zone">
+      <div id="joystick-aim-knob"></div>
+    </div>
+  </div>
+
+  <script>
+    // ════════════════════════════════════════════════
+    //  SUPABASE BAĞLANTISI (DevStore ile aynı)
+    // ════════════════════════════════════════════════
+    const SUPA_URL   = "https://reniyluwooscqmixyeuy.supabase.co";
+    const SUPA_KEY   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlbml5bHV3b29zY3FtaXh5ZXV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxOTA1MDQsImV4cCI6MjA5Mjc2NjUwNH0.x_riFj4jD6aBh6faW9dxvCcT13KeyNQncq6R-HKglXU";
+    const supa       = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+    // ════════════════════════════════════════════════
+    //  OTURUM YÖNETİMİ
+    // ════════════════════════════════════════════════
+    async function checkSession() {
+      const { data: { session } } = await supa.auth.getSession();
+      if (session) {
+        showGameUI(session.user.email);
+      } else {
+        document.getElementById('auth-screen').style.display = 'block';
+        document.getElementById('game-ui').style.display = 'none';
+      }
+    }
+
+    async function doLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const pass  = document.getElementById('login-pass').value;
+      const msgEl = document.getElementById('auth-msg');
+      const btn   = document.getElementById('login-btn');
+
+      if (!email || !pass) {
+        msgEl.textContent = 'Lütfen e-posta ve şifrenizi girin.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Bağlanıyor...';
+      
+      const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+      
+      if (error) {
+        btn.disabled = false;
+        btn.textContent = 'Oyuna Gir';
+        msgEl.textContent = 'Giriş Başarısız: ' + error.message;
+        return;
+      }
+
+      // Başarılı Giriş
+      msgEl.style.color = 'var(--gold)';
+      msgEl.textContent = 'Giriş Başarılı! Arenaya yönlendiriliyor...';
+      
+      setTimeout(() => {
+        showGameUI(email);
+      }, 1000);
+    }
+
+    async function doRegister() {
+      const email = document.getElementById('login-email').value.trim();
+      const pass  = document.getElementById('login-pass').value;
+      const msgEl = document.getElementById('auth-msg');
+      const btn   = document.getElementById('register-btn');
+
+      if (!email || !pass) {
+        msgEl.textContent = 'Lütfen kayıt olmak için e-posta ve şifre girin.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Kaydediliyor...';
+      
+      const { data, error } = await supa.auth.signUp({ email, password: pass });
+      
+      if (error) {
+        btn.disabled = false;
+        btn.textContent = 'Yeni Kayıt Ol';
+        msgEl.textContent = 'Kayıt Hatası: ' + error.message;
+        return;
+      }
+
+      msgEl.style.color = 'var(--gold)';
+      msgEl.textContent = 'Kayıt Başarılı! Şimdi "Oyuna Gir" butonuna basarak giriş yapabilirsin.';
+      btn.disabled = false;
+      btn.textContent = 'Yeni Kayıt Ol';
+    }
+
+    function showGameUI(email) {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('game-ui').style.display = 'block';
+      
+      // Profili Güncelle
+      const shortName = email.split('@')[0];
+      document.getElementById('user-name').textContent = shortName;
+      document.getElementById('user-avatar').textContent = shortName[0].toUpperCase();
+      document.getElementById('profile-name').textContent = shortName;
+      document.getElementById('profile-avatar').textContent = shortName[0].toUpperCase();
+    }
+
+    // ════════════════════════════════════════════════
+    //  ARAYÜZ ETKİLEŞİMLERİ (Navigasyon)
+    // ════════════════════════════════════════════════
+    function showModal(title, desc) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-desc').textContent = desc;
+      document.getElementById('info-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('info-modal').style.display = 'none';
+    }
+
+    // Tam Ekran Geçişleri (Karakterler, Profil vb.)
+    let currentScreen = null;
+    function openScreen(screenId) {
+      document.getElementById('game-ui').style.display = 'none';
+      document.getElementById(screenId).style.display = 'flex';
+      currentScreen = screenId;
+    }
+    function goBack() {
+      if (currentScreen) {
+        document.getElementById(currentScreen).style.display = 'none';
+        document.getElementById('game-ui').style.display = 'block';
+        currentScreen = null;
+      }
+    }
+
+    // Mod Seçimi
+    function openModeModal() {
+      document.getElementById('mode-modal').style.display = 'flex';
+    }
+    function closeModeModal() {
+      document.getElementById('mode-modal').style.display = 'none';
+    }
+    function selectMode(modeName) {
+      document.getElementById('current-mode-text').textContent = modeName;
+      closeModeModal();
+    }
+
+    // Başlangıçta çalıştır
+    checkSession();
+
+    // ════════════════════════════════════════════════
+    //  OYUN MOTORU VE MULTIPLAYER (Socket.io)
+    // ════════════════════════════════════════════════
+    let socket;
+    let isPlaying = false;
+    let players = {};
+    let myId = null;
+    let killFeed = [];
+
+    
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // ════════════════════════════════════════════════
+    //  GÖRSELLER (SPRITES) YÜKLEME
+    // ════════════════════════════════════════════════
+    const sprites = {
+      'Acemi': new Image(),
+      'Kıvılcım': new Image(),
+      'Titan': new Image(),
+      'Gölge': new Image(),
+      'bg_floor': new Image(),
+      'obstacle_wall': new Image()
+    };
+    sprites['Acemi'].src = 'assets/acemi.png';
+    sprites['Kıvılcım'].src = 'assets/kivilcim.png';
+    sprites['Titan'].src = 'assets/titan.png';
+    sprites['Gölge'].src = 'assets/golge.png';
+    sprites['bg_floor'].src = 'assets/bg_floor.png';
+    sprites['obstacle_wall'].src = 'assets/obstacle_wall.png';
+
+    // Kill Feed rendering
+    function renderKillFeed() {
+      const feedEl = document.getElementById('kill-feed');
+      feedEl.innerHTML = '';
+      killFeed.slice(-5).reverse().forEach(item => {
+        const div = document.createElement('div');
+        div.textContent = `${item.killer} ➜ ${item.victim}`;
+        feedEl.appendChild(div);
+      });
+    }
+
+    // Klavye Kontrolleri
+    const keys = { w: false, a: false, s: false, d: false, arrowup: false, arrowdown: false, arrowleft: false, arrowright: false };
+    window.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+      if (keys.hasOwnProperty(key)) keys[key] = true;
+    });
+    window.addEventListener('keyup', (e) => {
+      const key = e.key.toLowerCase();
+      if (keys.hasOwnProperty(key)) keys[key] = false;
+    });
+
+    // Mobil Joystick Kontrolleri
+    const joystickZone = document.getElementById('joystick-zone');
+    const joystickKnob = document.getElementById('joystick-knob');
+    let joystickActive = false;
+    let joystickVector = { x: 0, y: 0 };
+    
+    joystickZone.addEventListener('touchstart', handleJoystickStart, {passive: false});
+    joystickZone.addEventListener('touchmove', handleJoystickMove, {passive: false});
+    joystickZone.addEventListener('touchend', handleJoystickEnd);
+    joystickZone.addEventListener('touchcancel', handleJoystickEnd);
+
+    function handleJoystickStart(e) {
+      e.preventDefault();
+      joystickActive = true;
+      updateJoystick(e.touches[0]);
+    }
+    function handleJoystickMove(e) {
+      if (!joystickActive) return;
+      e.preventDefault();
+      updateJoystick(e.touches[0]);
+    }
+    function handleJoystickEnd(e) {
+      joystickActive = false;
+      joystickVector = { x: 0, y: 0 };
+      joystickKnob.style.transform = `translate(-50%, -50%)`;
+    }
+    function updateJoystick(touch) {
+      const rect = joystickZone.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      let dx = touch.clientX - centerX;
+      let dy = touch.clientY - centerY;
+      
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const maxDist = rect.width / 2;
+      
+      if (distance > maxDist) {
+        dx = (dx / distance) * maxDist;
+        dy = (dy / distance) * maxDist;
+      }
+      
+      joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+      
+      joystickVector.x = dx / maxDist;
+      joystickVector.y = dy / maxDist;
+    }
+
+    // Mobil Nişan Joystick Kontrolleri
+    const joystickAimZone = document.getElementById('joystick-aim-zone');
+    const joystickAimKnob = document.getElementById('joystick-aim-knob');
+    let joystickAimActive = false;
+    let aimAngle = 0;
+
+    joystickAimZone.addEventListener('touchstart', (e) => { e.preventDefault(); joystickAimActive = true; updateAimJoystick(e.touches[0]); }, {passive: false});
+    joystickAimZone.addEventListener('touchmove', (e) => { if(joystickAimActive) { e.preventDefault(); updateAimJoystick(e.touches[0]); } }, {passive: false});
+    joystickAimZone.addEventListener('touchend', (e) => { 
+      if(joystickAimActive && socket) {
+        socket.emit('shoot', aimAngle);
+      }
+      joystickAimActive = false; 
+      joystickAimKnob.style.transform = `translate(-50%, -50%)`; 
+    });
+    joystickAimZone.addEventListener('touchcancel', () => { joystickAimActive = false; joystickAimKnob.style.transform = `translate(-50%, -50%)`; });
+
+    function updateAimJoystick(touch) {
+      const rect = joystickAimZone.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      let dx = touch.clientX - centerX;
+      let dy = touch.clientY - centerY;
+      
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const maxDist = rect.width / 2;
+      
+      if (distance > maxDist) {
+        dx = (dx / distance) * maxDist;
+        dy = (dy / distance) * maxDist;
+      }
+      
+      aimAngle = Math.atan2(dy, dx);
+      joystickAimKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    }
+
+    // PC Ateş Etme (Fare Tıklaması)
+    canvas.addEventListener('mousedown', (e) => {
+      if (!isPlaying || !myId || !players[myId] || !socket) return;
+      let me = players[myId];
+      
+      // Kamera kaymasını hesaba katarak farenin haritadaki gerçek yerini bulma
+      let camX = canvas.width / 2 - me.x;
+      let camY = canvas.height / 2 - me.y;
+      
+      let mouseX = e.clientX - camX;
+      let mouseY = e.clientY - camY;
+      
+      let angle = Math.atan2(mouseY - me.y, mouseX - me.x);
+      socket.emit('shoot', angle);
+    });
+
+    let obstacles = [];
+    let bullets = [];
+    let mapWidth = 2000;
+    let mapHeight = 2000;
+
+    function startGame() {
+      // Arayüzleri gizle, Arenayı aç
+      document.getElementById('game-ui').style.display = 'none';
+      if(currentScreen) {
+        document.getElementById(currentScreen).style.display = 'none';
+        currentScreen = null;
+      }
+      document.getElementById('game-arena').style.display = 'block';
+      isPlaying = true;
+      resizeCanvas();
+
+      // Render Sunucusuna Sadece 1 Kez Bağlan
+      if (!socket) {
+        socket = io("https://brawly-server.onrender.com");
+        
+        socket.on('connect', () => {
+          myId = socket.id;
+          const playerName = document.getElementById('user-name').textContent;
+          // Sunucuya karakter bilgilerini gönder
+          socket.emit('playerJoined', { 
+            email: playerName, 
+            charId: 'Acemi'
+          });
+        });
+
+        socket.on('initGame', (data) => { 
+          players = data.players; 
+          obstacles = data.obstacles;
+          mapWidth = data.mapWidth;
+          mapHeight = data.mapHeight;
+        });
+        
+        socket.on('gameState', (data) => {
+          players = data.players;
+          bullets = data.bullets;
+        });
+        
+        socket.on('killFeed', (data) => {
+            killFeed.push(data);
+        });
+
+        socket.on('newPlayer', (data) => { players[data.id] = data.playerInfo; });
+        socket.on('playerMoved', (data) => {
+          if(players[data.id]) {
+            players[data.id].x = data.x;
+            players[data.id].y = data.y;
+          }
+        });
+        socket.on('playerUpdated', (data) => { players[data.id] = data.playerInfo; });
+        socket.on('playerDisconnected', (id) => { delete players[id]; });
+      }
+      
+      requestAnimationFrame(gameLoop);
+    }
+
+    function exitGame() {
+      isPlaying = false;
+      document.getElementById('game-arena').style.display = 'none';
+      document.getElementById('game-ui').style.display = 'block';
+      
+      // Oyundan çıkıldığında sunucu bağlantısını tamamen kopar ki karakter haritadan silinsin
+      if (socket) {
+        socket.disconnect();
+        socket = null;
+        myId = null;
+        players = {};
+      }
+    }
+
+    function checkLocalCollision(px, py, radius) {
+      if (px < radius) return true;
+      if (py < radius) return true;
+      if (px > mapWidth - radius) return true;
+      if (py > mapHeight - radius) return true;
+      for (let obs of obstacles) {
+        // Sunucudaki hitbox ile aynı mantık: 70x70 boyutunda ve 15 piksel içeride
+        let hitX = obs.x + 15;
+        let hitY = obs.y + 15;
+        let hitW = 70;
+        let hitH = 70;
+        let closestX = Math.max(hitX, Math.min(px, hitX + hitW));
+        let closestY = Math.max(hitY, Math.min(py, hitY + hitH));
+        let distanceX = px - closestX;
+        let distanceY = py - closestY;
+        if ((distanceX * distanceX) + (distanceY * distanceY) < (radius * radius)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    const speed = 6;
+    function gameLoop() {
+      if (!isPlaying) return;
+
+      if (myId && players[myId]) {
+        let moved = false;
+        let me = players[myId];
+        let nextX = me.x;
+        let nextY = me.y;
+        
+        // Klavye Hareketleri
+        if (keys.w || keys.arrowup) { nextY -= speed; moved = true; }
+        if (keys.s || keys.arrowdown) { nextY += speed; moved = true; }
+        if (keys.a || keys.arrowleft) { nextX -= speed; moved = true; }
+        if (keys.d || keys.arrowright) { nextX += speed; moved = true; }
+        
+        // Joystick Hareketleri
+        if (joystickActive) {
+          nextX += joystickVector.x * speed;
+          nextY += joystickVector.y * speed;
+          moved = true;
+        }
+
+        if (moved) {
+          // Yerel çarpışma testi (Kekemeliği önler)
+          if (!checkLocalCollision(nextX, me.y, 30)) me.x = nextX;
+          if (!checkLocalCollision(me.x, nextY, 30)) me.y = nextY;
+          
+          socket.emit('playerMovement', { x: me.x, y: me.y });
+        }
+      }
+
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Deprecated duplicate draw function removed.
+// The new draw implementation is defined earlier in the file.
+
+  // Duplicate draw implementation removed
+}
+
+      if (!myId || !players[myId]) return;
+      let me = players[myId];
+
+      // Arka plan (Boşluk Rengi)
+      ctx.fillStyle = '#050508';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.save();
+      // Kamera Takibi
+    // Camera position smoothing
+    // Define persistent camPos if not already defined
+    if (typeof camPos === 'undefined') {
+      window.camPos = { x: 0, y: 0 };
+    }
+    const targetCamX = canvas.width / 2 - me.x;
+    const targetCamY = canvas.height / 2 - me.y;
+    // Lerp for smooth movement (factor 0.1)
+    camPos.x += (targetCamX - camPos.x) * 0.1;
+    camPos.y += (targetCamY - camPos.y) * 0.1;
+    // Round to integer to avoid sub‑pixel jitter
+    const camX = Math.round(camPos.x);
+    const camY = Math.round(camPos.y);
+    ctx.translate(camX, camY);
+
+      // Zemin (Metal Fabrika) - Pattern varsa döşe, yoksa grid çiz
+      if (sprites['bg_floor'].complete && sprites['bg_floor'].naturalWidth > 0) {
+        let pattern = ctx.createPattern(sprites['bg_floor'], 'repeat');
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, mapWidth, mapHeight);
+      } else {
+        // Fallback Grid
+        ctx.strokeStyle = 'rgba(124, 92, 252, 0.15)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= mapWidth; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, mapHeight); ctx.stroke(); }
+        for (let y = 0; y <= mapHeight; y += 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(mapWidth, y); ctx.stroke(); }
+      }
+
+      // Harita Sınır Çizgisi
+      ctx.strokeStyle = '#fc5c7d';
+      ctx.lineWidth = 10;
+      ctx.strokeRect(0, 0, mapWidth, mapHeight);
+
+      // Engeller (Neon Duvarlar)
+      for (let obs of obstacles) {
+        if (sprites['obstacle_wall'].complete && sprites['obstacle_wall'].naturalWidth > 0) {
+          ctx.drawImage(sprites['obstacle_wall'], obs.x, obs.y, obs.width, obs.height);
+        } else {
+          ctx.fillStyle = 'rgba(124, 92, 252, 0.5)';
+          ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+        }
+      }
+
+        // Mermileri çiz
+        for (let b of bullets) {
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#00f0ff';
+          ctx.fillStyle = '#00f0ff';
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+        // Kill Feed'i güncelle
+        renderKillFeed();
+
+      // Oyuncular
+      for (let id in players) {
+        let p = players[id];
+        let isMe = (id === myId);
+        
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = isMe ? '#ffd166' : '#fc5c7d';
+        
+        // Karakter Çizimi (Görsel)
+        let charImg = sprites[p.charId] || sprites['Acemi']; // Varsayılan Acemi
+        
+        ctx.save();
+        ctx.beginPath();
+        // Görseli yuvarlak içine kesmek (Kırpmak) için maske
+        ctx.arc(p.x, p.y, 30, 0, Math.PI * 2);
+        ctx.closePath();
+        // Kendi karakterimizse sarı, başkasıysa kırmızı ince bir çerçeve
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = isMe ? '#ffd166' : '#fc5c7d';
+        ctx.stroke();
+        ctx.clip(); // Resmi bu dairenin içine sığdır
+        
+        ctx.drawImage(charImg, p.x - 30, p.y - 30, 60, 60);
+        ctx.restore();
+        
+        ctx.shadowBlur = 0;
+        
+        // İsim Etiketi
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px "Syne", sans-serif';
+        ctx.textAlign = 'center';
+        let name = p.email || 'Oyuncu';
+        if(isMe) name += " (Sen)";
+        ctx.fillText(name, p.x, p.y - 45);
+      }
+      
+      ctx.restore(); // Kamera translate iptali
+    }
+  </script>
+</body>
+</html>

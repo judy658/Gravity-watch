@@ -1,0 +1,34 @@
+[
+  {
+    "role": "user",
+    "content": "merhaba jarvis"
+  },
+  {
+    "role": "assistant",
+    "content": "Merhaba! Nasıl yardımcı olabilirim?"
+  },
+  {
+    "role": "user",
+    "content": "neler yapabilirsin?"
+  },
+  {
+    "role": "assistant",
+    "content": "Birçok şey yapabilirim! Bilgi verme, yazma yardımı, dil çevirisi, web araması, zaman bilgisi,/weather ve çok daha fazlası. Hangi konuda yardım istiyorum size söyleyin?"
+  },
+  {
+    "role": "user",
+    "content": "kod yazabilirmisin?"
+  },
+  {
+    "role": "assistant",
+    "content": "Yazılım dilini bilirim: Python, Java, C#, JavaScript, SQL ve Ruby gibi birçok dile hakimim. Bir kod yazma isteğinizi belirtip daha da detaylandırabilir miyim?"
+  },
+  {
+    "role": "user",
+    "content": "basit bir oyun yap bana flappy bird gibi"
+  },
+  {
+    "role": "assistant",
+    "content": "Bir Flappy Bird tarzı oyunu kolayca kodlayabilirim. Python ile oluşturacağım ve Pygame kütüphanesini kullanacağım.\n\nAşağıdaki kod, Flappy Bird benzeri bir oyunu oluşturur:\n\n```python\nimport pygame\nimport sys\n\n# Oyun ayarları\npencere_genisligi = 640\npencere_yuksekligi = 480\nrenk_siyah = (0, 0, 0)\nrenk_beyaz = (255, 255, 255)\n\n# Piyano nesnesini oluşturma fonksiyonu\ndef piyano(nesne_x, nesne_y):\n    pygame.draw.rect(pencere, renk_beyaz, [nesne_x, nesne_y, 50, 10])\n\n# Kuşu nesnesini oluşturma fonksiyonu\ndef kus(nesne_x, nesne_y):\n    pygame.draw.ellipse(pencere, renk_beyaz, [nesne_x, nesne_y, 30, 20])\n\n# Piyano ve kuşun çarpıştığı zaman oyun bitiyor\ndef oyun_bit():\n    return True\n\n# Oyun başlama fonksiyonu\ndef oyun_basla():\n    global skor, yükseklik\n    skor = 0\n    yükseklik = 0\n    piyano_x = pencere_genisligi / 2 - 25\n    piyano_y = pencere_yuksekligi * 0.7\n    kus_x = pencere_genisligi / 2 - 15\n    kus_y = pencere_yuksekligi / 2\n\n# Pygame'u başlatma fonksiyonu\ndef pygame_baslat():\n    global skor, yükseklik, piyano_x, piyano_y, kus_x, kus_y\n    pygame.init()\n    ekran = pygame.display.set_mode((pencere_genisligi, pencere_yuksekligi))\n    saat = pygame.time.Clock()\n\n# Oyun döngüsü\ndef oyun_dongusu():\n    global skor, yükseklik, piyano_x, piyano_y, kus_x, kus_y\n    while True:\n        for event in pygame.event.get():\n            if event.type == pygame.QUIT:\n                pygame.quit()\n                sys.exit()\n\n        # Piyano ve kuşun hareketini düzenleme\n        piyano_x -= 5\n        kus_y += 2\n\n        # Oyun bitinceye kadar devam ediyor\n        if oyun_bit() or kus_y > pencere_yuksekligi - 10:\n            return False\n\n        # Pencereyi temizle ve güncelle\n        ekran.fill(renk_siyah)\n        piyano(piyano_x, piyano_y)\n        kus(kus_x, kus_y)\n\n        # Skoru güncelle\n        font = pygame.font.Font(None, 36)\n        text = font.render(str(skor), True, renk_beyaz)\n        ekran.blit(text, (10, 10))\n\n        # Piyano ve kuşun çarpıştığı zaman skoru arttırmak için\n        if piyano_x < kus_x + 30 and piyano_x + 50 > kus_x:\n            if piyano_y < kus_y + 20:\n                skor += 1\n\n        # Hafta, yüksekliği kontrol et\n        if kus_y > pencere_yuksekligi / 2:\n            yükseklik = False\n        elif kus_y < pencere_yuksekligi / 2 and high == True:\n            high = False\n            print(\"Yükseklik kaydedildi!\")\n\n        # Pencereyi göster\n        pygame.display.flip()\n        saat.tick(60)\n\n# Oyunu başlatma fonksiyonu\ndef oyun():\n    global skor, yükseklik\n    pygame_baslat()\n    oyun_dongusu()\n\n# Oyunu başlattım!\noyun()\n```\n\nBu kodla bir Flappy Bird tarzı oyun oluşturduk! Piyano ve kuşun çarpıştığı zaman skoru arttırmak için kullanılan bir sistem var.\n\nBununla birlikte, game_over fonksiyonu eksik. Game over fonksiyonunu da ekleyerek daha gerçekçi bir deneyim elde edebiliriz:\n\n```python\ndef game_over():\n    while True:\n        for event in pygame.event.get():\n            if event.type == pygame.QUIT:\n                return False\n\n        ekran.fill(renk_siyah)\n        font = pygame.font.Font(None, 36)\n        text = font.render(\"Game Over!\", True, renk_beyaz)\n        ekran.blit(text, (pencere_genisligi / 2 - 100, pencere_yuksekligi / 2))\n        font = pygame.font.Font(None, 24)\n        text = font.render(f\"Sınavda skorunuz: {skor}\", True, renk_beyaz)\n        ekran.blit(text, (pencere_genisligi / 2 - 100, pencere_yuksekligi / 2 + 50))\n        pygame.display.flip()\n        saat.tick(60)\n\n    return False\n```\n\nBu game_over fonksiyonunu, oyun bitinceye kadar görmeye başladık.\n\nKullanıcıların deneyimlerini artırmak için, bir skor tablosu oluşturabiliriz:\n\n```python\ndef skor_tablosu():\n    font = pygame.font.Font(None, 36)\n    text = font.render(\"Sınav Skorları:\", True, renk_beyaz)\n    ekran.blit(text, (pencere_genisligi / 2 - 150, pencere_yuksekligi / 2))\n    skor_text = font.render(f\"Sınavda skorunuz: {skor}\", True, renk_beyaz)\n    ekran.blit(skor_text, (pencere_genisligi / 2 - 100, pencere_yuksekligi / 2 + 50))\n\n# Oyunu başlattım!\noyun()\n```\n\nBu skor tablosunu da ekleyerek daha gerçekçi bir deneyim elde edebiliriz.\n\nDaha birçok özellik ekleyebiliriz. Hangi özelliği eklemek istersiniz?"
+  }
+]

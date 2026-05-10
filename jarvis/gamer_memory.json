@@ -1,0 +1,42 @@
+{
+    "flappy_bird": {
+        "name": "Flappy Bird",
+        "logic_mode": "predictive_sim",
+        "controls": ["space"],
+        "hsv_ranges": {
+            "bird": [[20, 100, 100], [40, 255, 255]],
+            "pipes": [[35, 60, 60], [90, 255, 255]]
+        },
+        "params": {
+            "prediction_multiplier": 2,
+            "jump_cooldown": 0.16,
+            "jump_peak": 72,
+            "ceiling_margin": 78,
+            "gap_size": 155,
+            "target_offset": 10
+        },
+        "description": "Kaptan'ın 156 puanlık mühendislik harikası simülasyon protokolü."
+    },
+    "snake": {
+        "name": "Yılan Oyunu",
+        "logic_mode": "greedy_path",
+        "controls": ["up", "down", "left", "right"],
+        "hsv_ranges": {
+            "head": [[35, 100, 100], [85, 255, 255]],
+            "food": [[0, 100, 100], [10, 255, 255]]
+        },
+        "params": {
+            "step_size": 20,
+            "reaction_speed": 0.1
+        },
+        "description": "Elma odaklı, 4 yönlü navigasyon protokolü."
+    },
+    "default": {
+        "name": "Yeni Oyun",
+        "logic_mode": "manual",
+        "controls": [],
+        "hsv_ranges": {},
+        "params": {},
+        "description": "Araştırma ve öğrenme bekleyen yeni profil."
+    }
+}
