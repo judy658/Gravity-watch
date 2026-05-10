@@ -135,45 +135,53 @@ def get_home_feed(user_data=None, page=1):
     return interleaved[:20]
 
 def resolve_video(video_id):
-    """BOT SAVAR (V2): Kendi gucumuz yetmezse Cobalt yardima kosar"""
+    """BOT SAVAR (V3): Cerez Uyumu + Gelişmiş Cobalt Fallback"""
     url = f"https://www.youtube.com/watch?v={video_id}"
     
-    # ADIM 1: Kendi Manifest Hunter stratejimiz
-    clients = ['android_vr', 'ios', 'android', 'mweb']
+    # ADIM 1: Cerezlere en uygun olan 'web' ve 'mweb' istemcilerini oncele
+    # Cunku kullanicinin cerezleri bir tarayicidan (Web) alindi.
+    clients = ['web', 'mweb', 'ios', 'android_vr']
     for client in clients:
         try:
             ydl_opts = {
-                'format': 'best[ext=mp4]/best',
+                'format': 'best', # En iyi tek parca formatini otomatik secsin
                 'quiet': True,
                 'no_warnings': True,
                 'javascript_runtimes': ['node'],
                 'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None,
                 'extractor_args': {'youtube': {'player_client': [client]}},
-                'nocheckcertificate': True,
-                'socket_timeout': 7
+                'socket_timeout': 10
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 if info and info.get('url'):
+                    print(f"!!! Basarili: {client} istemcisiyle link alindi.")
                     return {
                         "id": video_id, "title": info.get('title'), "best_url": info.get('url'),
                         "uploader": info.get('uploader')
                     }
         except: continue
             
-    # ADIM 2: Cobalt API (Yedek Plan - Hayat Kurtaran)
-    print(f"!!! Kendi gucumuz yetmedi, Cobalt devreye giriyor: {video_id}")
+    # ADIM 2: Cobalt API (Daha esnek parametrelerle)
+    print(f"!!! Yerel deneme basarisiz, Cobalt'a gidiliyor: {video_id}")
     try:
         cobalt_res = requests.post("https://api.cobalt.tools/api/json", 
             headers={"Accept": "application/json", "Content-Type": "application/json"},
-            json={"url": url, "videoQuality": "1080"}, timeout=10)
+            json={
+                "url": url, 
+                "videoQuality": "720", # 1080 bazen hata verebilir, 720 garantidir
+                "isAudioOnly": False,
+                "filenamePattern": "basic"
+            }, timeout=15)
         if cobalt_res.status_code == 200:
             c_data = cobalt_res.json()
             if c_data.get('url'):
+                print(f"!!! Cobalt Basarili: {video_id}")
                 return {"id": video_id, "best_url": c_data['url'], "title": "Cobalt HD"}
-    except: pass
+    except Exception as e:
+        print(f"!!! Cobalt Hatasi: {e}")
     
-    return {"error": "Video kilitli. Lutfen baska bir video deneyin veya cerezleri tazeleyin."}
+    return {"error": "Maalesef tum yollar kapali. Cerezleri tazelemek gerekebilir."}
 
 def search_videos(query):
     if not query: return []
