@@ -135,53 +135,56 @@ def get_home_feed(user_data=None, page=1):
     return interleaved[:20]
 
 def resolve_video(video_id):
-    """BOT SAVAR (V3): Cerez Uyumu + Gelişmiş Cobalt Fallback"""
+    """BOT SAVAR (V4 - NIHAİ): Web Çerezler + Cobalt + Invidious Üçlü Hattı"""
     url = f"https://www.youtube.com/watch?v={video_id}"
     
-    # ADIM 1: Cerezlere en uygun olan 'web' ve 'mweb' istemcilerini oncele
-    # Cunku kullanicinin cerezleri bir tarayicidan (Web) alindi.
-    clients = ['web', 'mweb', 'ios', 'android_vr']
-    for client in clients:
+    # ADIM 1: Web Çerez Uyumu (En Sağlamı)
+    for client in ['web', 'mweb', 'ios', 'android_vr']:
         try:
             ydl_opts = {
-                'format': 'best', # En iyi tek parca formatini otomatik secsin
+                'format': 'best',
                 'quiet': True,
                 'no_warnings': True,
                 'javascript_runtimes': ['node'],
                 'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None,
                 'extractor_args': {'youtube': {'player_client': [client]}},
-                'socket_timeout': 10
+                'nocheckcertificate': True,
+                'socket_timeout': 8
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 if info and info.get('url'):
-                    print(f"!!! Basarili: {client} istemcisiyle link alindi.")
-                    return {
-                        "id": video_id, "title": info.get('title'), "best_url": info.get('url'),
-                        "uploader": info.get('uploader')
-                    }
+                    print(f"!!! Bot Basarili: {client}")
+                    return {"id": video_id, "title": info.get('title'), "best_url": info.get('url')}
         except: continue
             
-    # ADIM 2: Cobalt API (Daha esnek parametrelerle)
-    print(f"!!! Yerel deneme basarisiz, Cobalt'a gidiliyor: {video_id}")
+    # ADIM 2: Cobalt (Basitleştirilmiş Sorgu)
+    print(f"!!! Bot Elendi, Cobalt Deneniyor: {video_id}")
     try:
         cobalt_res = requests.post("https://api.cobalt.tools/api/json", 
             headers={"Accept": "application/json", "Content-Type": "application/json"},
-            json={
-                "url": url, 
-                "videoQuality": "720", # 1080 bazen hata verebilir, 720 garantidir
-                "isAudioOnly": False,
-                "filenamePattern": "basic"
-            }, timeout=15)
-        if cobalt_res.status_code == 200:
-            c_data = cobalt_res.json()
-            if c_data.get('url'):
-                print(f"!!! Cobalt Basarili: {video_id}")
-                return {"id": video_id, "best_url": c_data['url'], "title": "Cobalt HD"}
-    except Exception as e:
-        print(f"!!! Cobalt Hatasi: {e}")
+            json={"url": url, "videoQuality": "720"}, timeout=12)
+        c_data = cobalt_res.json()
+        if c_data.get('url'):
+            print(f"!!! Cobalt Basarili!")
+            return {"id": video_id, "best_url": c_data['url'], "title": "Cobalt HD"}
+    except: pass
+
+    # ADIM 3: Invidious (Son Kale)
+    print(f"!!! Cobalt Elendi, Invidious Deneniyor: {video_id}")
+    invidious_instances = ["https://inv.tux.pizza", "https://invidious.asir.dev", "https://vid.puffyan.us"]
+    for inv in invidious_instances:
+        try:
+            res = requests.get(f"{inv}/api/v1/videos/{video_id}", timeout=8)
+            if res.status_code == 200:
+                data = res.json()
+                streams = [s for s in data.get('formatStreams', []) if s.get('container') == 'mp4']
+                if streams:
+                    print(f"!!! Invidious Basarili: {inv}")
+                    return {"id": video_id, "best_url": streams[0]['url'], "title": data.get('title')}
+        except: continue
     
-    return {"error": "Maalesef tum yollar kapali. Cerezleri tazelemek gerekebilir."}
+    return {"error": "Tum sunucular ve yontemler YouTube tarafindan engellendi."}
 
 def search_videos(query):
     if not query: return []
