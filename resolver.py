@@ -30,18 +30,26 @@ def is_trash(title, uploader, duration=None):
     if any(tag in title for tag in bot_tags): return True
 
     # 2. Klasik Muzik ve Klip Kelimeleri
-    music_keywords = ['official video', 'official audio', 'lyric', 'music video', 'video klip', 'şarkı', 'müzik', 'klip', 'song', 'ft.', 'feat', 'prod.', 'remix', 'vevo']
+    music_keywords = [
+        'official video', 'official audio', 'lyric', 'music video', 'video klip', 'şarkı', 'müzik', 'klip', 'song', 
+        'ft.', 'feat', 'prod.', 'remix', 'vevo', 'pop', 'caz', 'jazz', 'rock', 'metal', 'hip hop', 'rap', 
+        'arabesk', 'türkü', 'halk müziği', 'electronic', 'techno', 'playlist', 'albüm', 'album'
+    ]
     if any(word in title for word in music_keywords): return True
     if uploader.endswith(' - topic'): return True
 
-    # --- YENİ: MUZIK SEZGISI (Heuristic) ---
-    # Eger baslikta "Sanatci - Eser" yapisi varsa ve suresi sarkı kadarsa
-    if duration and 90 <= duration <= 330: # 1.5 dk ile 5.5 dk arasi
-        if ' - ' in title or ' | ' in title or ' – ' in title:
-            # Egitim, inceleme veya rehber degilse buyuk ihtimalle sarkidir
-            non_music = ['inceleme', 'haber', 'nasıl', 'rehber', 'vlog', 'ders', 'tutorial', 'review', 'guide']
-            if not any(w in title for w in non_music):
-                return True 
+    # --- YENİ: MUZIK SEZGISI (Daha Agresif) ---
+    # Baslikta " - " veya " | " varsa (Sanatci - Eser yapisi)
+    if ' - ' in title or ' | ' in title or ' – ' in title:
+        # Eger baslikta bu yapi varsa artik sureyi bile beklemiyoruz, direkt süpheli!
+        non_music = ['inceleme', 'haber', 'nasıl', 'rehber', 'vlog', 'ders', 'tutorial', 'review', 'guide', 'news']
+        if not any(w in title for w in non_music):
+            return True 
+
+    # Suresi sarkı kadarsa (Garantici yaklasim)
+    if duration and 90 <= duration <= 360:
+        # Extra kontrol gerekirse buraya eklenir
+        pass
 
     # 3. Reklam ve Tanitim
     ad_keywords = ['reklam', 'tanıtım', 'sponsorlu', 'iş birliği', 'fragman', 'trailer', 'teaser']
