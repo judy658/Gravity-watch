@@ -10,6 +10,12 @@ app = Flask(__name__, static_folder='gravity-watch-mobile', static_url_path='')
 CORS(app)
 
 # SUPABASE
+# Render'in proxy ayarlarini temizle (Supabase çakışmasını önlemek için)
+os.environ.pop('HTTP_PROXY', None)
+os.environ.pop('HTTPS_PROXY', None)
+os.environ.pop('http_proxy', None)
+os.environ.pop('https_proxy', None)
+
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = None
