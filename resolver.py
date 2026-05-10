@@ -8,10 +8,8 @@ import re
 
 COOKIES_FILE = "gravity_cookies.txt"
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
-thread_local = threading.local()
 
 def get_ydl_instance(client='android'):
-    """Farkli cihaz istemcileriyle yt-dlp motoru kurar"""
     opts = {
         'quiet': True, 
         'extract_flat': True, 
@@ -22,9 +20,6 @@ def get_ydl_instance(client='android'):
                 'player_client': [client],
                 'player_skip': ['webpage', 'configs']
             }
-        },
-        'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
     }
     return yt_dlp.YoutubeDL(opts)
@@ -49,7 +44,7 @@ def is_trash(title, uploader, duration=None):
 
 def fetch_query(q_tuple):
     q_str, label, seen_ids, sub_name = q_tuple
-    ydl = get_ydl_instance('web') # Arama icin web istemcisi yeterli
+    ydl = get_ydl_instance('web')
     res = []
     try:
         query = q_str.replace('ytsearch10:', 'ytsearch40:').replace('ytsearch15:', 'ytsearch40:')
@@ -138,21 +133,23 @@ def get_home_feed(user_data=None, page=1):
     return interleaved[:20]
 
 def resolve_video(video_id):
-    """BOT SAVAR (MANIFEST HUNTER): Farkli istemcilerle bot engelini kirar"""
+    """YUKSEK KALITE & BOT SAVAR: android_vr + cookies ile 1080p kovalama"""
     url = f"https://www.youtube.com/watch?v={video_id}"
-    # IOS ve Android istemcileri bot engeline takilmaya en az meyilli olanlardir
-    clients = ['ios', 'android', 'mweb', 'web']
+    
+    # android_vr istemcisi 1080p progressive (tek parca) linkler icin en iyisidir
+    clients = ['android_vr', 'ios', 'android', 'mweb']
     
     for client in clients:
         try:
             ydl_opts = {
-                # Esnek format: Once MP4 dene, olmazsa en iyi tek parca (progressive) ne varsa onu al
+                # Progressive (video+audio) formatlari oncelikle
                 'format': 'best[ext=mp4]/best',
                 'quiet': True,
                 'no_warnings': True,
                 'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None,
                 'extractor_args': {'youtube': {'player_client': [client]}},
-                'nocheckcertificate': True
+                'nocheckcertificate': True,
+                'socket_timeout': 10
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
@@ -163,22 +160,17 @@ def resolve_video(video_id):
                         "qualities": {f"{f.get('height')}p": f.get('url') for f in info.get('formats', []) if f.get('height') and f.get('url')}
                     }
         except Exception as e:
-            # Eger "Requested format is not available" hatasi alirsak, format filtresini tamamen kaldirip tekrar dene
-            if "format is not available" in str(e):
-                try:
-                    with yt_dlp.YoutubeDL({'format': 'best', 'quiet': True, 'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None}) as ydl_retry:
-                        info = ydl_retry.extract_info(url, download=False)
-                        if info and info.get('url'):
-                            return {
-                                "id": video_id, "title": info.get('title'), "thumbnail": info.get('thumbnail'),
-                                "uploader": info.get('uploader'), "best_url": info.get('url'),
-                                "qualities": {}
-                            }
-                except: pass
             print(f"!!! Client {client} failed for {video_id}: {e}")
             continue
             
-    return {"error": "Tum istemciler bot engeline takildi. Lutfen cerezleri tazeleyin."}
+    # Hicbir sey olmazsa 'best' formatina geri don
+    try:
+        with yt_dlp.YoutubeDL({'format': 'best', 'quiet': True, 'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None}) as ydl_final:
+            info = ydl_final.extract_info(url, download=False)
+            if info: return {"id": video_id, "best_url": info.get('url'), "title": info.get('title')}
+    except: pass
+    
+    return {"error": "Video cozulemedi. Lutfen cerezleri kontrol edin."}
 
 def search_videos(query):
     if not query: return []
