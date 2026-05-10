@@ -59,31 +59,37 @@ def fetch_safe_videos(ydl, query, count, seen_ids, label):
 
 def get_home_feed(user_data=None, page=1):
     """
-    KESIN ALTIN KURAL (%50 Abone, %30 Begeni, %10 Trend, %10 TR Populer)
-    Muzik videolari kesinlikle yasaktir.
+    KEŞFET: %50 Abone, %30 Beğeni, %10 Trend, %10 TR
+    ABONELİKLER: %100 Sadece Abone Olunan Kanallar
+    Müzik videoları kesinlikle yasaktir.
     """
     user_data = user_data or {}
     interests = user_data.get('interests', {})
     subscriptions = user_data.get('subscriptions', [])
+    subs_only = user_data.get('subscriptions_only', False)
     seen_ids = user_data.get('seen_ids', [])
     
     total_target = 20
-    counts = {
-        "SUBS": 10,     # %50
-        "LIKE": 6,      # %30
-        "TREND": 2,     # %10
-        "TR": 2         # %10
-    }
-
     final_feed = []
     ydl_opts = {'quiet': True, 'extract_flat': True, 'socket_timeout': 15}
     if os.path.exists(COOKIES_FILE): ydl_opts['cookiefile'] = COOKIES_FILE
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # 1. %50 ABONELIKLER (10 Video)
+            # --- DURUM 1: SADECE ABONELIKLER (%100) ---
+            if subs_only:
+                if not subscriptions: return []
+                random.shuffle(subscriptions)
+                for sub in subscriptions:
+                    final_feed.extend(fetch_safe_videos(ydl, sub, 5, seen_ids, "ABONELIK"))
+                    if len(final_feed) >= total_target: break
+                return final_feed[:total_target]
+
+            # --- DURUM 2: KESFET (ALTIN KURAL) ---
+            counts = {"SUBS": 10, "LIKE": 6, "TREND": 2, "TR": 2}
+
+            # 1. %50 ABONELIKLER
             if subscriptions:
-                # Aboneleri karistir ki her seferinde ayni kanal gelmesin
                 random.shuffle(subscriptions)
                 sub_pool = []
                 for sub in subscriptions:
@@ -91,7 +97,7 @@ def get_home_feed(user_data=None, page=1):
                     if len(sub_pool) >= counts["SUBS"]: break
                 final_feed.extend(sub_pool[:counts["SUBS"]])
 
-            # 2. %30 BEGENI/ILGI (6 Video)
+            # 2. %30 BEGENI/ILGI
             if interests:
                 top_tags = sorted(interests.items(), key=lambda x: x[1], reverse=True)[:3]
                 like_pool = []
@@ -105,14 +111,17 @@ def get_home_feed(user_data=None, page=1):
             # 4. %10 TR POPULER (2 Video)
             final_feed.extend(fetch_safe_videos(ydl, "trending turkey", counts["TR"], seen_ids, "TR POPULER"))
 
-            # EKSİKLERİ TAMAMLA (Eger abone/begeni yoksa trend ile doldur)
+            # EKSİKLERİ TAMAMLA
             if len(final_feed) < total_target:
                 missing = total_target - len(final_feed)
                 final_feed.extend(fetch_safe_videos(ydl, "most popular", missing, seen_ids, "KESFET"))
 
-            # Listeyi karistir ki siralamada tek duzelik olmasin
             random.shuffle(final_feed)
             return final_feed[:total_target]
+
+    except Exception as e:
+        print(f"!!! Feed Logic Error: {e}")
+        return []
 
     except Exception as e:
         print(f"!!! Golden Rule Constitution Error: {e}")
