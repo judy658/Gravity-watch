@@ -9,28 +9,17 @@ from resolver import resolve_video, get_home_feed, search_videos
 app = Flask(__name__, static_folder='gravity-watch-mobile', static_url_path='')
 CORS(app)
 
-import traceback
-
 # SUPABASE
-# Render'in proxy ayarlarini hem os hem de local düzeyde sil
-for key in ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy']:
-    if key in os.environ:
-        del os.environ[key]
-
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = None
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    print(f"⚠️ [SUPABASE] Missing Env Variables!")
-else:
+if SUPABASE_URL and SUPABASE_KEY:
     try:
-        # En yalın haliyle bağlanmayı dene
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
         print("✅ Supabase Connected Successfully")
     except Exception as e:
-        print(f"❌ Supabase Connection Failed!")
-        traceback.print_exc() # Hatayı tüm detaylarıyla (satır satır) yazdır
+        print(f"❌ Supabase Connection Failed: {e}")
 
 data_manager = GravityDataManager()
 
