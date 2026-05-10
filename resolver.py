@@ -199,7 +199,13 @@ def get_home_feed(user_data=None, page=1):
 def resolve_video(video_id):
     url = f"https://www.youtube.com/watch?v={video_id}"
     try:
-        ydl_opts = {'format': 'best', 'quiet': True, 'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None}
+        # Tek parca (video+ses) MP4 formatini zorla ki mobil cihazlar rahat indirsin
+        ydl_opts = {
+            'format': 'best[ext=mp4]/best', 
+            'quiet': True, 
+            'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None,
+            'nocheckcertificate': True
+        }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             return {

@@ -43,6 +43,17 @@ def home():
     feed = get_home_feed(data, data.get('page', 1))
     return jsonify(feed)
 
+@app.route('/api/get_download_url', methods=['GET'])
+def get_download_url():
+    video_id = request.args.get('video_id')
+    if not video_id: return jsonify({"error": "No ID"}), 400
+    info = resolve_video(video_id)
+    return jsonify({
+        "title": info.get('title'),
+        "download_url": info.get('best_url'),
+        "filename": f"{info.get('title', 'video')}.mp4"
+    })
+
 @app.route('/api/resolve', methods=['GET'])
 def resolve():
     v_id = request.args.get('url')
