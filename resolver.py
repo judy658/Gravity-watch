@@ -114,8 +114,13 @@ def get_home_feed(user_data=None, page=1):
             for tag, _ in active_tags:
                 queries.append((f"ytsearch{depth}:{tag} news", 'İLGİ', seen_ids))
         
-        queries.append((f"ytsearch{depth}:popüler türkiye", 'TREND', seen_ids))
-        queries.append((f"ytsearch{depth}:yeni keşfet", 'KEŞFET', seen_ids))
+        # --- GLOBAL VIP POPÜLER (%10) ---
+        global_vips = ['MrBeast', 'Mark Rober', 'Dude Perfect', 'Veritasium', 'Sidemen']
+        queries.append((f"ytsearch{depth}:{random.choice(global_vips)} new video", 'TREND', seen_ids))
+        
+        # --- TR VIP POPÜLER (%10) ---
+        tr_vips = ['Enes Batur', 'Ruhi Çenet', 'Alper Rende', 'Barış Özcan', 'Orkun Işıtmak']
+        queries.append((f"ytsearch{depth}:{random.choice(tr_vips)} son video", 'KEŞFET', seen_ids))
 
     # PARALEL MOTOR CALISIYOR
     raw_results = []
