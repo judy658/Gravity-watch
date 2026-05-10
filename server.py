@@ -39,9 +39,8 @@ def home():
     if user_email: data_manager.switch_user(user_email)
     
     data = request.json or {}
-    page = data.get('page', 1)
-    
-    feed = get_home_feed(user_email, page)
+    # Tum veriyi (interests, subscriptions, page) resolver'a gonder
+    feed = get_home_feed(data, data.get('page', 1))
     return jsonify(feed)
 
 @app.route('/api/resolve', methods=['GET'])
