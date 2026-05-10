@@ -146,11 +146,13 @@ def resolve_video(video_id):
     for client in clients:
         try:
             ydl_opts = {
+                # Esnek format: Once MP4 dene, olmazsa en iyi tek parca (progressive) ne varsa onu al
                 'format': 'best[ext=mp4]/best',
                 'quiet': True,
                 'no_warnings': True,
                 'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None,
-                'extractor_args': {'youtube': {'player_client': [client]}}
+                'extractor_args': {'youtube': {'player_client': [client]}},
+                'nocheckcertificate': True
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
@@ -161,6 +163,18 @@ def resolve_video(video_id):
                         "qualities": {f"{f.get('height')}p": f.get('url') for f in info.get('formats', []) if f.get('height') and f.get('url')}
                     }
         except Exception as e:
+            # Eger "Requested format is not available" hatasi alirsak, format filtresini tamamen kaldirip tekrar dene
+            if "format is not available" in str(e):
+                try:
+                    with yt_dlp.YoutubeDL({'format': 'best', 'quiet': True, 'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None}) as ydl_retry:
+                        info = ydl_retry.extract_info(url, download=False)
+                        if info and info.get('url'):
+                            return {
+                                "id": video_id, "title": info.get('title'), "thumbnail": info.get('thumbnail'),
+                                "uploader": info.get('uploader'), "best_url": info.get('url'),
+                                "qualities": {}
+                            }
+                except: pass
             print(f"!!! Client {client} failed for {video_id}: {e}")
             continue
             
