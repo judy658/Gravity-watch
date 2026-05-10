@@ -114,9 +114,9 @@ def get_home_feed(user_data=None, page=1):
             for tag, _ in active_tags:
                 queries.append((f"ytsearch{depth}:{tag} news", 'İLGİ', seen_ids))
         
-        # --- GLOBAL VIP POPÜLER (%10) ---
+        # --- GLOBAL VIP POPÜLER (%10) - TÜRKÇE DUBLAJ ÖNCELİKLİ ---
         global_vips = ['MrBeast', 'Mark Rober', 'Dude Perfect', 'Veritasium', 'Sidemen']
-        queries.append((f"ytsearch{depth}:{random.choice(global_vips)} new video", 'TREND', seen_ids))
+        queries.append((f"ytsearch{depth}:{random.choice(global_vips)} türkçe", 'TREND', seen_ids))
         
         # --- TR VIP POPÜLER (%10) ---
         tr_vips = ['Enes Batur', 'Ruhi Çenet', 'Alper Rende', 'Barış Özcan', 'Orkun Işıtmak']
