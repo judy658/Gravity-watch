@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gravity Watch Mobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#050a0f">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="background-glow"></div>
+
+    <!-- Auth View -->
+    <div id="auth-view" class="view">
+        <div class="auth-container">
+            <div class="logo-large">
+                <i class="fas fa-rocket"></i>
+                <span>Gravity-<span>Watch</span></span>
+            </div>
+            <p class="auth-subtitle">Geleceğin yayıncılığına mobil adımını at.</p>
+            <div class="auth-form">
+                <input type="email" id="auth-email" placeholder="E-posta Adresi">
+                <input type="password" id="auth-password" placeholder="Şifre">
+                <button id="login-submit-btn" class="auth-btn">Giriş Yap</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="main-app" style="display: none;">
+        <header class="mobile-header">
+            <div class="logo">
+                <i class="fas fa-rocket"></i>
+                <span>Gravity</span>
+            </div>
+            <div class="header-actions">
+                <button id="search-toggle-btn"><i class="fas fa-search"></i></button>
+                <img id="user-avatar" src="" alt="Avatar">
+            </div>
+            <div id="search-overlay" class="search-overlay">
+                <input type="text" id="video-search" placeholder="Bir şeyler ara...">
+                <button id="close-search-btn"><i class="fas fa-times"></i></button>
+            </div>
+        </header>
+
+        <main class="container">
+            <!-- Home/Discover View -->
+            <div id="home-view" class="view">
+                <div class="feed-header">
+                    <h1>Sana Özel</h1>
+                </div>
+                <div id="video-grid" class="video-grid">
+                    <!-- Skeletons will be here -->
+                </div>
+            </div>
+
+            <!-- Player View -->
+            <div id="player-view" class="player-view" style="display: none;">
+                <div class="player-wrapper">
+                    <div id="player-placeholder" class="player-placeholder">
+                        <video id="main-player" playsinline controls autoplay></video>
+                    </div>
+                    <div class="video-info">
+                        <h2 id="video-title">Yükleniyor...</h2>
+                        <div class="video-meta">
+                            <div class="channel-info" id="channel-link">
+                                <img id="channel-avatar" src="" alt="">
+                                <div class="channel-text">
+                                    <span id="video-author">Kanal Adı</span>
+                                    <span id="video-subs">0 Abone</span>
+                                </div>
+                            </div>
+                            <button id="sub-btn" class="sub-btn"><i class="fas fa-plus"></i> Abone Ol</button>
+                        </div>
+                        <div class="action-bar">
+                            <button id="like-btn" class="action-btn"><i class="fas fa-heart"></i><span>Beğen</span></button>
+                            <button id="download-btn" class="action-btn"><i class="fas fa-download"></i><span>İndir</span></button>
+                            <button id="share-btn" class="action-btn"><i class="fas fa-share"></i><span>Paylaş</span></button>
+                            <select id="quality-selector" class="quality-select">
+                                <option value="auto">Otomatik</option>
+                            </select>
+                        </div>
+                        <div class="description-box">
+                            <p id="video-desc">Video açıklaması yükleniyor...</p>
+                        </div>
+                        <div class="comments-preview" id="open-comments-btn">
+                            <div class="preview-header">
+                                <span>Yorumlar</span>
+                                <span id="comment-count">0</span>
+                            </div>
+                            <div class="preview-content" id="top-comment">
+                                Bir yorum yaz...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Channel View -->
+            <div id="channel-view" class="view" style="display: none;">
+                <div class="channel-header-mobile">
+                    <div class="channel-header-content">
+                        <img id="channel-view-avatar" src="" alt="">
+                        <div class="channel-view-meta">
+                            <h2 id="channel-view-name">Kanal Adı</h2>
+                            <span id="channel-view-subs">0 Abone</span>
+                        </div>
+                    </div>
+                    <p id="channel-view-desc">Açıklama...</p>
+                </div>
+                <div id="channel-grid" class="video-grid"></div>
+            </div>
+
+            <!-- Subscriptions View -->
+            <div id="subs-view" class="view" style="display: none;">
+                <div class="feed-header">
+                    <h1>Abonelikler</h1>
+                </div>
+                <div id="subs-grid" class="video-grid"></div>
+            </div>
+
+            <!-- Liked View -->
+            <div id="liked-view" class="view" style="display: none;">
+                <div class="feed-header">
+                    <h1>Beğendiklerim</h1>
+                </div>
+                <div id="liked-grid" class="video-grid"></div>
+            </div>
+
+            <!-- Profile View -->
+            <div id="profile-view" class="view" style="display: none;">
+                <div class="profile-header">
+                    <img id="profile-avatar-large" src="" alt="">
+                    <h2 id="profile-email">email@example.com</h2>
+                </div>
+                <div class="profile-menu">
+                    <div class="menu-item" id="nav-history">
+                        <i class="fas fa-history"></i>
+                        <span>Geçmiş</span>
+                    </div>
+                    <div class="menu-item" id="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Çıkış Yap</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" data-view="home">
+                <i class="fas fa-home"></i>
+                <span>Keşfet</span>
+            </div>
+            <div class="nav-item" data-view="subs">
+                <i class="fas fa-play-circle"></i>
+                <span>Takip</span>
+            </div>
+            <div class="nav-item" data-view="liked">
+                <i class="fas fa-heart"></i>
+                <span>Beğeni</span>
+            </div>
+            <div class="nav-item" data-view="profile">
+                <i class="fas fa-user"></i>
+                <span>Profil</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Comments Sheet -->
+    <div id="comments-sheet" class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <h3>Yorumlar</h3>
+            <button id="close-comments-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="comments-list" class="comments-list"></div>
+        <div class="comment-input-area">
+            <input type="text" id="comment-input" placeholder="Düşünceni paylaş...">
+            <button id="send-comment-btn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <div id="loading-overlay" class="loader-overlay" style="display: none;">
+        <div class="loader"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
