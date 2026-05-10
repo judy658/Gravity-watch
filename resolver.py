@@ -112,20 +112,23 @@ def get_home_feed(user_data=None, page=1):
     if subscriptions:
         sub_list = list(subscriptions)
         random.shuffle(sub_list)
-        for sub in sub_list[:10]: # Her seferinde 10 farkli aboneye odaklan
+        # Abonelik moduysa daha fazla kanala bak (Cunku sızıntı istemiyoruz)
+        sub_limit = 20 if subs_only else 10
+        for sub in sub_list[:sub_limit]:
             queries.append((f"ytsearch{depth}:{sub}", 'ABONELİK', seen_ids, sub))
 
+    # --- SADECE KESFET MODUNDAYSA DIGERLERINI EKLE ---
     if not subs_only:
         if interests:
             active_tags = sorted(interests.items(), key=lambda x: x[1], reverse=True)[:4]
             for tag, _ in active_tags:
                 queries.append((f"ytsearch{depth}:{tag} news", 'İLGİ', seen_ids, None))
         
-        # --- GLOBAL VIP POPÜLER (%10) - TÜRKÇE DUBLAJ ÖNCELİKLİ ---
+        # GLOBAL VIP
         global_vips = ['MrBeast', 'Mark Rober', 'Dude Perfect', 'Veritasium', 'Sidemen']
         queries.append((f"ytsearch{depth}:{random.choice(global_vips)} türkçe", 'TREND', seen_ids, None))
         
-        # --- TR VIP POPÜLER (%10) ---
+        # TR VIP
         tr_vips = ['Enes Batur', 'Ruhi Çenet', 'Alper Rende', 'Barış Özcan', 'Orkun Işıtmak']
         queries.append((f"ytsearch{depth}:{random.choice(tr_vips)} son video", 'KEŞFET', seen_ids, None))
 
