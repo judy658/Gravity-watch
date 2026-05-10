@@ -1,6 +1,7 @@
 import React from 'react';
 import { FlatList, View, Text, Image, TouchableOpacity, ActivityIndicator, RefreshControl, StyleSheet } from 'react-native';
 import { COLORS } from '../theme';
+import { Download } from 'lucide-react-native';
 
 /**
  * VideoList – displays a list of video cards.
