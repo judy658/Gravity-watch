@@ -110,15 +110,24 @@ def get_home_feed(user_email=None, page=1):
 
 def search_videos(query):
     if not query: return []
-    with get_ydl_instance() as ydl:
-        try:
+    ydl_opts = {
+        'quiet': True,
+        'extract_flat': True,
+        'socket_timeout': 10
+    }
+    if os.path.exists(COOKIES_FILE):
+        ydl_opts['cookiefile'] = COOKIES_FILE
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             results = ydl.extract_info(f"ytsearch15:{query}", download=False).get('entries', [])
             return [{
                 "id": e.get('id'),
                 "title": e.get('title'),
-                "thumbnail": e.get('thumbnail'),
-                "uploader": e.get('uploader'),
+                "thumbnail": e.get('thumbnail') or f"https://i.ytimg.com/vi/{e.get('id')}/hqdefault.jpg",
+                "uploader": e.get('uploader') or "YouTube",
                 "channel_id": e.get('channel_id')
             } for e in results if e]
-        except:
-            return []
+    except Exception as e:
+        print(f"!!! Search Error: {e}")
+        return []
