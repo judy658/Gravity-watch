@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, View, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { X } from 'lucide-react-native';
+import { X, Download } from 'lucide-react-native';
 import { supabaseData, supabaseAuth } from '../lib/supabase';
+import { DownloadService, DownloadProgress } from '../services/DownloadService';
+import ExportModal from './ExportModal';
 
 export default function PlayerModal({
   visible,
@@ -19,6 +21,13 @@ export default function PlayerModal({
   const [isLiked, setIsLiked] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [exportVisible, setExportVisible] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<DownloadProgress>({
+    phase: 'idle',
+    videoProgress: 0,
+    audioProgress: 0,
+    message: ''
+  });
 
   useEffect(() => {
     if (visible && video) {
@@ -134,6 +143,14 @@ export default function PlayerModal({
     }
   };
 
+  const handleDownload = async () => {
+    if (!video) return;
+    setExportVisible(true);
+    await DownloadService.downloadVideo(video.id, (progress) => {
+      setDownloadProgress(progress);
+    });
+  };
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <View style={styles.container}>
@@ -224,9 +241,23 @@ export default function PlayerModal({
                   {isSubscribed ? 'Abone Olundu' : 'Abone Ol'}
                 </Text>
               </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.actionButton, styles.downloadButton]} 
+                onPress={handleDownload}
+              >
+                <Download size={20} color="#FFD700" />
+                <Text style={styles.downloadButtonText}>İndir</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
+
+        <ExportModal 
+          visible={exportVisible} 
+          progress={downloadProgress} 
+          onClose={() => setExportVisible(false)} 
+        />
       </View>
     </Modal>
   );
@@ -326,5 +357,17 @@ const styles = StyleSheet.create({
   },
   subscribedButtonText: {
     color: '#a0a0b0',
+  },
+  downloadButton: {
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    borderColor: '#FFD700',
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  downloadButtonText: {
+    color: '#FFD700',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

@@ -6,7 +6,7 @@ import yt_dlp
 import threading
 from supabase import create_client, Client
 from data_manager import GravityDataManager
-from resolver import get_video_info, search_videos, get_home_feed, get_liked_videos_info, get_channel_info
+from resolver import get_video_info, search_videos, get_home_feed, get_liked_videos_info, get_channel_info, resolve_video_split
 
 app = Flask(__name__, static_folder='gravity-watch-mobile', static_url_path='')
 CORS(app, resources={r"/api/*": {"origins": "*"}}, allow_headers=["Content-Type", "X-User-Email"])
@@ -166,6 +166,13 @@ def channel_info():
 @app.route('/api/search', methods=['GET'])
 def search():
     return jsonify(search_videos(request.args.get('q')))
+
+@app.route('/api/resolve_split', methods=['GET'])
+def resolve_split():
+    v_id = request.args.get('video_id')
+    if not v_id: return jsonify({"error": "No ID"}), 400
+    info = resolve_video_split(v_id)
+    return jsonify(info)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

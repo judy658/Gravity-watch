@@ -197,3 +197,62 @@ def search_videos(query):
             "uploader": e.get('uploader') or "YouTube"
         } for e in results if e and not is_trash(e.get('title'), e.get('uploader'), e.get('duration'))]
     except: return []
+
+def resolve_video_split(video_id):
+    """BOT SAVAR (V5): Ayrisik Video ve Ses Akisi Saglayici"""
+    url = f"https://www.youtube.com/watch?v={video_id}"
+    
+    # Adim 1: yt-dlp ile formatlari ayristir
+    for client in ['android', 'ios', 'web', 'mweb']:
+        try:
+            ydl_opts = {
+                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                'quiet': True,
+                'no_warnings': True,
+                'javascript_runtimes': ['node'],
+                'cookiefile': COOKIES_FILE if os.path.exists(COOKIES_FILE) else None,
+                'extractor_args': {'youtube': {'player_client': [client]}},
+                'nocheckcertificate': True
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                formats = info.get('formats', [])
+                
+                # En iyi video formatini bul (sesiz)
+                video_f = [f for f in formats if f.get('vcodec') != 'none' and f.get('acodec') == 'none' and f.get('ext') == 'mp4']
+                if not video_f: video_f = [f for f in formats if f.get('vcodec') != 'none' and f.get('acodec') == 'none']
+                
+                # En iyi ses formatini bul (goruntusuz)
+                audio_f = [f for f in formats if f.get('acodec') != 'none' and f.get('vcodec') == 'none']
+                
+                if video_f and audio_f:
+                    best_v = video_f[-1]
+                    best_a = audio_f[-1]
+                    return {
+                        "id": video_id,
+                        "title": info.get('title'),
+                        "video_url": best_v.get('url'),
+                        "audio_url": best_a.get('url'),
+                        "video_ext": best_v.get('ext'),
+                        "audio_ext": best_a.get('ext'),
+                        "method": f"yt-dlp-{client}"
+                    }
+        except: continue
+
+    # Adim 2: Cobalt Fallback (Cobalt genellikle birlestirilmis verir ama biz yine de deneyelim)
+    try:
+        cobalt_res = requests.post("https://api.cobalt.tools/api/json", 
+            headers={"Accept": "application/json", "Content-Type": "application/json"},
+            json={"url": url, "videoQuality": "1080"}, timeout=12)
+        c_data = cobalt_res.json()
+        if c_data.get('url'):
+            return {
+                "id": video_id,
+                "video_url": c_data['url'],
+                "audio_url": None, # Cobalt genellikle muxed verir
+                "title": "Cobalt Export",
+                "method": "cobalt"
+            }
+    except: pass
+
+    return {"error": "Split streamler bulunamadi veya YouTube engelledi."}

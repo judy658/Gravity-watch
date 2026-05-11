@@ -4,7 +4,7 @@ import os
 import requests
 from supabase import create_client, Client
 from data_manager import GravityDataManager
-from resolver import resolve_video, get_home_feed, search_videos
+from resolver import resolve_video, get_home_feed, search_videos, resolve_video_split
 
 app = Flask(__name__, static_folder='gravity-watch-mobile', static_url_path='')
 CORS(app)
@@ -64,6 +64,13 @@ def resolve():
         data_manager.switch_user(user_email)
         data_manager.add_to_history(info)
         
+    return jsonify(info)
+
+@app.route('/api/resolve_split', methods=['GET'])
+def resolve_split():
+    v_id = request.args.get('video_id')
+    if not v_id: return jsonify({"error": "No ID"}), 400
+    info = resolve_video_split(v_id)
     return jsonify(info)
 
 @app.route('/api/search', methods=['GET'])
